@@ -134,7 +134,10 @@ export type CheckoutQuote = {
   isOutbid: boolean;
 };
 
-export async function getCheckoutQuote(placementSlug: string): Promise<CheckoutQuote> {
+export async function getCheckoutQuote(
+  placementSlug: string,
+  requestedAmountCents?: number,
+): Promise<CheckoutQuote> {
   const placement = getPlacement(placementSlug);
   if (!placement) throw new Error("That placement does not exist.");
 
@@ -164,8 +167,21 @@ export async function getCheckoutQuote(placementSlug: string): Promise<CheckoutQ
 
   const currentSponsor = (sponsorships ?? []).find((sponsorship) => sponsorship.status === "paid");
   if (currentSponsor) {
+    const minimumAmountCents = getNextBidAmountCents(Number(currentSponsor.amount_cents));
+    const amountCents = requestedAmountCents ?? minimumAmountCents;
+
+    if (!Number.isInteger(amountCents) || amountCents % 100 !== 0) {
+      throw new Error("Bids must be entered in whole-dollar amounts.");
+    }
+    if (amountCents < minimumAmountCents) {
+      throw new Error(`The minimum outbid is $${minimumAmountCents / 100}.`);
+    }
+    if (amountCents > 500_000) {
+      throw new Error("The maximum bid is $5,000.");
+    }
+
     return {
-      amountCents: getNextBidAmountCents(Number(currentSponsor.amount_cents)),
+      amountCents,
       supersedesSponsorshipId: currentSponsor.id,
       isOutbid: true,
     };
@@ -223,7 +239,13 @@ export async function reservePlacement(input: ReservationInput) {
 
     if (currentSponsorError) throw currentSponsorError;
     if (!currentSponsor) throw new Error("That sponsor was already replaced. Refresh and try again.");
-    if (getNextBidAmountCents(Number(currentSponsor.amount_cents)) !== input.amountCents) {
+    const minimumAmountCents = getNextBidAmountCents(Number(currentSponsor.amount_cents));
+    if (
+      !Number.isInteger(input.amountCents) ||
+      input.amountCents % 100 !== 0 ||
+      input.amountCents < minimumAmountCents ||
+      input.amountCents > 500_000
+    ) {
       throw new Error("The minimum outbid price changed. Refresh and try again.");
     }
   } else {

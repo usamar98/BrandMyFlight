@@ -142,8 +142,7 @@ export type PlacementWithState = Placement & {
 };
 
 export function getNextBidAmountCents(currentAmountCents: number) {
-  const twentyPercentHigher = Math.ceil(currentAmountCents * 1.2);
-  return Math.ceil(twentyPercentHigher / 500) * 500;
+  return currentAmountCents + 500;
 }
 
 export function getPlacement(slug: string) {

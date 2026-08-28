@@ -16,6 +16,7 @@ const checkoutSchema = z.object({
     .regex(/^@?[A-Za-z0-9_]*$/, "Enter a valid X handle.")
     .optional()
     .default(""),
+  bidAmount: z.number().int().min(1).max(5_000).optional(),
 });
 
 export type CheckoutResult = { url?: string; error?: string };
@@ -41,7 +42,10 @@ export async function createCheckout(input: unknown): Promise<CheckoutResult> {
   try {
     const [project, quote] = await Promise.all([
       fetchProjectMetadata(parsed.data.startupUrl),
-      getCheckoutQuote(placement.slug),
+      getCheckoutQuote(
+        placement.slug,
+        parsed.data.bidAmount ? parsed.data.bidAmount * 100 : undefined,
+      ),
     ]);
     const xHandle = parsed.data.xHandle
       ? `@${parsed.data.xHandle.replace(/^@/, "")}`

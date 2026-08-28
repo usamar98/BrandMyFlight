@@ -194,7 +194,7 @@ export function SponsorSite({ placements }: { placements: PlacementWithState[] }
         <div className="funding-intro">
           <p className="eyebrow">Transparent by design</p>
           <h2>A $750 flight,<br /><em>split ten ways.</em></h2>
-          <p>Every position starts at a clear price. Once claimed, another builder can outbid by 20%; the previous paid sponsor is automatically refunded.</p>
+          <p>Every position starts at a clear price. Once claimed, another builder can outbid it by at least $5 and raise their bid in $1 steps; the previous paid sponsor is automatically refunded.</p>
         </div>
         <div className="funding-grid">
           <FundingCard quantity="01" tier="Presenting" unit="$250" total="$250" className="funding-presenting" />
@@ -295,7 +295,7 @@ export function SponsorSite({ placements }: { placements: PlacementWithState[] }
         <div className="faq-list">
           <Faq question="Is this a real boarding pass?" answer="No. It is a fictional Sponsor Pass for a promotional campaign. It cannot be used for travel and deliberately includes no barcode, booking reference, or real airline branding." />
           <Faq question="What happens after I buy a position?" answer="Stripe confirms the payment, then the email on your Stripe receipt is used to coordinate your final logo artwork and campaign delivery. No BrandMyFlight account is created." />
-          <Faq question="What happens if another brand outbids me?" answer="Every claimed position remains open to a bid at least 20% higher, rounded to the next $5. When the challenger pays successfully, your original Stripe payment is automatically refunded and the new brand takes the position." />
+          <Faq question="What happens if another brand outbids me?" answer="Every claimed position remains open to a bid at least $5 above the current amount. Challengers can add more in $1 steps. When the challenger pays successfully, your original Stripe payment is automatically refunded and the new brand takes the position." />
           <Faq question="Do all sponsors receive the same deliverables?" answer="Every sponsor receives the digital Sponsor Pass, backlink, launch placement, airport/travel photography, recap inclusion, and public proof. Larger positions receive more visual prominence; the presenting position also receives the leading campaign credit." />
           <Faq question="What if the trip changes?" answer="If practical travel details shift, sponsors receive an updated delivery schedule. If the campaign cannot be completed, the terms provide for a replacement of equal value or a refund." />
           <Faq question="Can any startup sponsor the flight?" answer="Sponsors are reviewed for fit and safety. Fraudulent, unlawful, misleading, infringing, or travel-confusing artwork can be rejected and refunded." />
@@ -352,7 +352,7 @@ function HeroFleet({
         const brandName = preview?.name ?? placement.sponsor?.projectName ?? "YOUR BRAND";
         const faviconUrl = preview?.faviconUrl ?? placement.sponsor?.faviconUrl ?? null;
         const tagline = preview?.tagline ?? placement.sponsor?.tagline ?? "Your idea deserves the window seat.";
-        const brandColor = preview?.brandColor ?? placement.sponsor?.brandColor ?? "#c8ff25";
+        const brandColor = preview?.brandColor ?? placement.sponsor?.brandColor ?? "#f3f0e7";
         const xHandle = placement.sponsor?.xHandle ?? null;
         const isBranded = Boolean(preview || placement.sponsor);
         const horizontalMotion = layout.side === "left" ? layout.motion : -layout.motion;
@@ -385,6 +385,7 @@ function HeroFleet({
                 brandColor={brandColor}
                 xHandle={xHandle}
                 number={placement.number}
+                isBranded={isBranded}
               />
             </motion.div>
           </div>
@@ -401,6 +402,7 @@ function SponsorPlane({
   brandColor,
   xHandle,
   number,
+  isBranded,
 }: {
   brandName: string;
   faviconUrl: string | null;
@@ -408,6 +410,7 @@ function SponsorPlane({
   brandColor: string;
   xHandle: string | null;
   number: string;
+  isBranded: boolean;
 }) {
   const shortName = brandName.toUpperCase().slice(0, 18);
   const shortHandle = (xHandle ?? "SPONSORED BUILDER").toUpperCase().slice(0, 25);
@@ -446,17 +449,15 @@ function SponsorPlane({
       <path className="plane-cockpit" d="M292 31Q307 20 318 25L308 39Z" />
       <path className="plane-window-row" d="M231 82L281 41" />
 
-      {wingLogos.map((logo, index) => (
-        <g key={logo.x} transform={`rotate(${logo.rotation} ${logo.x} ${logo.y})`}>
-          <rect className="plane-logo-panel" x={logo.x - 19} y={logo.y - 19} width="38" height="38" rx="9" />
-          {faviconUrl ? (
-            <image href={faviconUrl} x={logo.x - 14} y={logo.y - 14} width="28" height="28" preserveAspectRatio="xMidYMid meet" />
-          ) : (
-            <text className="plane-logo-placeholder" x={logo.x} y={logo.y + 9} textAnchor="middle">+</text>
-          )}
-          <text className="plane-wing-label" x={logo.x} y={logo.y + 29} textAnchor="middle">{index === 0 ? "LEFT WING" : "RIGHT WING"}</text>
-        </g>
-      ))}
+      {isBranded && faviconUrl
+        ? wingLogos.map((logo, index) => (
+            <g key={logo.x} transform={`rotate(${logo.rotation} ${logo.x} ${logo.y})`}>
+              <rect className="plane-logo-panel" x={logo.x - 19} y={logo.y - 19} width="38" height="38" rx="9" />
+              <image href={faviconUrl} x={logo.x - 14} y={logo.y - 14} width="28" height="28" preserveAspectRatio="xMidYMid meet" />
+              <text className="plane-wing-label" x={logo.x} y={logo.y + 29} textAnchor="middle">{index === 0 ? "LEFT WING" : "RIGHT WING"}</text>
+            </g>
+          ))
+        : null}
 
       <g className="plane-copy" transform="rotate(-38 207 112)">
         <rect x="128" y="88" width="158" height="51" rx="10" />
@@ -515,6 +516,7 @@ function SponsorPass({
           const faviconUrl = preview?.faviconUrl ?? placement.sponsor?.faviconUrl;
           const tagline = preview?.tagline ?? placement.sponsor?.tagline;
           const brandColor = preview?.brandColor ?? placement.sponsor?.brandColor ?? "#c8ff25";
+          const brandInk = getContrastColor(brandColor);
           return (
             <button
               type="button"
@@ -523,7 +525,8 @@ function SponsorPass({
               key={placement.slug}
               onClick={() => onSelect(placement.slug)}
               aria-label={`Open ${placement.name}, $${placement.price}, ${placement.status}`}
-              style={{ "--slot-brand": brandColor } as CSSProperties}
+              data-branded={Boolean(sponsorName)}
+              style={{ "--slot-brand": brandColor, "--slot-ink": brandInk } as CSSProperties}
             >
               <span className="pass-slot-meta">{placement.number} · {placement.tier}</span>
               <div className="pass-brand">
@@ -583,6 +586,7 @@ function SponsorDrawer({
   const [previewError, setPreviewError] = useState("");
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
+  const [bidAmount, setBidAmount] = useState(placement.checkoutPrice);
   const [isPending, startTransition] = useTransition();
   const isOutbid = placement.status === "sold" && Boolean(placement.sponsor);
   const canCheckout = placement.status === "available" || (isOutbid && !placement.hasPendingBid);
@@ -635,7 +639,12 @@ function SponsorDrawer({
     event.preventDefault();
     setCheckoutError("");
     startTransition(async () => {
-      const result = await createCheckout({ placementSlug: placement.slug, startupUrl, xHandle });
+      const result = await createCheckout({
+        placementSlug: placement.slug,
+        startupUrl,
+        xHandle,
+        bidAmount: isOutbid ? bidAmount : undefined,
+      });
       if (result.url) window.location.assign(result.url);
       else setCheckoutError(result.error ?? "Unable to start checkout.");
     });
@@ -672,10 +681,19 @@ function SponsorDrawer({
         </dl>
 
         {isOutbid && placement.sponsor ? (
-          <div className="current-holder-card" style={{ "--holder-color": placement.sponsor.brandColor } as CSSProperties}>
+          <div
+            className="current-holder-card"
+            style={{
+              "--holder-color": placement.sponsor.brandColor,
+              "--holder-ink": getContrastColor(placement.sponsor.brandColor),
+            } as CSSProperties}
+          >
             <div
               className="current-holder-logo"
-              style={placement.sponsor.faviconUrl ? { backgroundImage: `url(${placement.sponsor.faviconUrl})` } : undefined}
+              style={{
+                backgroundColor: placement.sponsor.brandColor,
+                ...(placement.sponsor.faviconUrl ? { backgroundImage: `url(${placement.sponsor.faviconUrl})` } : {}),
+              }}
             >
               {placement.sponsor.faviconUrl ? null : placement.sponsor.projectName.slice(0, 1)}
             </div>
@@ -689,6 +707,23 @@ function SponsorDrawer({
 
         {canCheckout ? (
           <form onSubmit={handleSubmit} className="sponsor-form">
+            {isOutbid ? (
+              <div className="bid-builder">
+                <div>
+                  <span>Your outbid</span>
+                  <strong aria-live="polite">${bidAmount}</strong>
+                  <small>Starts $5 above the current bid. Add more in $1 steps.</small>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setBidAmount((amount) => Math.min(amount + 1, 5_000))}
+                  disabled={bidAmount >= 5_000}
+                  aria-label="Add one dollar to your bid"
+                >
+                  <b>+</b><span>$1</span>
+                </button>
+              </div>
+            ) : null}
             <label>
               <span>{isOutbid ? "Challenger startup URL" : "Startup URL"}</span>
               <input
@@ -716,29 +751,36 @@ function SponsorDrawer({
               <input type="text" autoComplete="off" placeholder="@yourstartup" value={xHandle} onChange={(event) => setXHandle(event.target.value)} />
             </label>
 
-            <div className={`brand-preview ${preview ? "brand-preview-ready" : ""}`}>
-              {isPreviewing ? <><LoaderCircle className="spin" /><span>Reading your website…</span></> : null}
-              {!isPreviewing && preview ? (
-                <>
-                  <div
-                    className="brand-favicon"
-                    style={{
-                      backgroundColor: preview.brandColor,
-                      ...(preview.faviconUrl ? { backgroundImage: `url(${preview.faviconUrl})` } : {}),
-                    }}
-                  >
-                    {preview.faviconUrl ? null : preview.name.slice(0, 1)}
-                  </div>
-                  <div><strong>{preview.name}</strong><p>{preview.tagline}</p></div>
-                </>
-              ) : null}
-              {!isPreviewing && !preview && !previewError ? <><Sparkles /><span>Your Sponsor Pass preview appears here.</span></> : null}
-              {previewError ? <span className="form-error">{previewError}</span> : null}
-            </div>
+            {isPreviewing || preview || previewError ? (
+              <div
+                className={`brand-preview ${preview ? "brand-preview-ready" : ""}`}
+                style={preview ? {
+                  "--preview-color": preview.brandColor,
+                  "--preview-ink": getContrastColor(preview.brandColor),
+                } as CSSProperties : undefined}
+              >
+                {isPreviewing ? <><LoaderCircle className="spin" /><span>Reading your website…</span></> : null}
+                {!isPreviewing && preview ? (
+                  <>
+                    <div
+                      className="brand-favicon"
+                      style={{
+                        backgroundColor: preview.brandColor,
+                        ...(preview.faviconUrl ? { backgroundImage: `url(${preview.faviconUrl})` } : {}),
+                      }}
+                    >
+                      {preview.faviconUrl ? null : preview.name.slice(0, 1)}
+                    </div>
+                    <div><strong>{preview.name}</strong><p>{preview.tagline}</p></div>
+                  </>
+                ) : null}
+                {previewError ? <span className="form-error">{previewError}</span> : null}
+              </div>
+            ) : null}
 
             {checkoutError ? <p className="checkout-error">{checkoutError}</p> : null}
             <button className="checkout-button" type="submit" disabled={isPending || isPreviewing || !preview}>
-              <span>{isPending ? "Opening secure checkout…" : `${isOutbid ? "Outbid with Stripe" : "Continue to Stripe"} · $${placement.checkoutPrice}`}</span>
+              <span>{isPending ? "Opening secure checkout…" : isOutbid ? `Outbid · $${bidAmount}` : `Continue to Stripe · $${placement.checkoutPrice}`}</span>
               {isPending ? <LoaderCircle className="spin" /> : <ArrowRight />}
             </button>
             <p className="stripe-note">

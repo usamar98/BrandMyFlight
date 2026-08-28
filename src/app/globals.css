@@ -171,7 +171,6 @@ h1 em, h2 em {
 .plane-cockpit { fill: var(--plane-ink); stroke: #11110f; stroke-linejoin: round; stroke-width: 2.4; }
 .plane-window-row { fill: none; opacity: 0.8; stroke: var(--plane-ink); stroke-dasharray: 1 7; stroke-linecap: round; stroke-width: 3; }
 .plane-logo-panel { fill: #fffdf4; stroke: #11110f; stroke-width: 3; }
-.plane-logo-placeholder { fill: #11110f; font-family: Arial, sans-serif; font-size: 29px; font-weight: 900; }
 .plane-wing-label { fill: #11110f; font-family: "Courier New", monospace; font-size: 5px; font-weight: 900; letter-spacing: 0.08em; paint-order: stroke; stroke: #fffdf4; stroke-width: 2px; }
 .plane-copy rect { fill: var(--plane-ink); opacity: 0.94; stroke: #11110f; stroke-width: 2.2; }
 .plane-brand-name { fill: var(--plane-color); font-family: Arial, sans-serif; font-size: 13px; font-weight: 900; letter-spacing: 0.025em; }
@@ -290,7 +289,8 @@ h1 em, h2 em {
 .pass-slot-premium { grid-column: span 6; min-height: 94px; }
 .pass-slot-medium { grid-column: span 4; min-height: 86px; }
 .pass-slot-small { grid-column: span 3; min-height: 78px; }
-.pass-slot[data-status="sold"] { background: var(--acid); box-shadow: inset 5px 0 0 var(--slot-brand); color: var(--ink); }
+.pass-slot[data-branded="true"] { background: var(--slot-brand); color: var(--slot-ink); }
+.pass-slot[data-status="sold"] { background: var(--slot-brand); box-shadow: inset 5px 0 0 var(--slot-ink); color: var(--slot-ink); }
 .pass-slot[data-status="reserved"] { background: var(--paper-deep); }
 .pass-slot-meta, .pass-slot-foot { font-family: "Courier New", monospace; font-size: 6.5px; letter-spacing: 0.08em; text-transform: uppercase; }
 .pass-slot-foot { opacity: 0.68; text-align: right; }
@@ -313,7 +313,7 @@ h1 em, h2 em {
   height: 56px;
   justify-content: center;
 }
-.pass-slot[data-status="sold"] .pass-brand-mark { background-color: var(--paper); }
+.pass-slot[data-branded="true"] .pass-brand-mark { background-color: var(--slot-brand); }
 .pass-footer {
   align-items: center;
   background: var(--ink);
@@ -470,12 +470,12 @@ main > footer div a:not(.wordmark) { align-items: center; display: flex; font-si
 .drawer-specs div:last-child { border-right: 0; }
 .drawer-specs dt { color: var(--muted); font-family: "Courier New", monospace; font-size: 7px; letter-spacing: 0.08em; margin-bottom: 7px; text-transform: uppercase; }
 .drawer-specs dd { font-size: 10px; margin: 0; }
-.current-holder-card { align-items: center; background: var(--paper-deep); border-left: 7px solid var(--holder-color); display: flex; gap: 16px; margin-top: 28px; padding: 18px; }
-.current-holder-logo { align-items: center; background-color: var(--paper); background-position: center; background-repeat: no-repeat; background-size: 72%; border: 1px solid var(--ink); box-shadow: inset 0 0 0 4px var(--holder-color); display: flex; flex: 0 0 66px; font-size: 25px; font-weight: 900; height: 66px; justify-content: center; }
+.current-holder-card { align-items: center; background: var(--holder-color); border: 1px solid var(--holder-ink); color: var(--holder-ink); display: flex; gap: 16px; margin-top: 28px; padding: 18px; }
+.current-holder-logo { align-items: center; background-position: center; background-repeat: no-repeat; background-size: 72%; border: 1px solid currentColor; box-shadow: inset 0 0 0 3px currentColor; display: flex; flex: 0 0 66px; font-size: 25px; font-weight: 900; height: 66px; justify-content: center; }
 .current-holder-card > div:last-child { min-width: 0; }
-.current-holder-card span { color: var(--muted); display: block; font-family: "Courier New", monospace; font-size: 8px; letter-spacing: 0.08em; margin-bottom: 6px; text-transform: uppercase; }
+.current-holder-card span { color: currentColor; display: block; font-family: "Courier New", monospace; font-size: 8px; letter-spacing: 0.08em; margin-bottom: 6px; opacity: 0.72; text-transform: uppercase; }
 .current-holder-card strong { display: block; font-size: 17px; }
-.current-holder-card p { color: var(--muted); font-size: 10px; line-height: 1.4; margin: 5px 0 0; }
+.current-holder-card p { color: currentColor; font-size: 10px; line-height: 1.4; margin: 5px 0 0; opacity: 0.72; }
 .sponsor-form { display: flex; flex-direction: column; gap: 22px; padding: 29px 0; }
 .sponsor-form label { display: flex; flex-direction: column; gap: 9px; }
 .sponsor-form label > span { font-size: 11px; font-weight: 800; }
@@ -484,12 +484,22 @@ main > footer div a:not(.wordmark) { align-items: center; display: flex; font-si
 .sponsor-form input:focus { border-bottom-width: 2px; }
 .sponsor-form label small { color: var(--muted); font-size: 9px; }
 .brand-preview { align-items: center; background: var(--paper-deep); border: 1px solid transparent; display: flex; gap: 14px; min-height: 94px; padding: 15px; }
-.brand-preview-ready { background: var(--acid); border-color: var(--ink); }
+.brand-preview-ready { background: var(--preview-color); border-color: var(--preview-ink); color: var(--preview-ink); }
 .brand-preview > svg { height: 18px; width: 18px; }
 .brand-preview > span { font-family: "Courier New", monospace; font-size: 9px; letter-spacing: 0.05em; }
 .brand-favicon { align-items: center; background-color: var(--paper); background-position: center; background-repeat: no-repeat; background-size: 65%; border: 1px solid var(--line); display: flex; flex: 0 0 54px; font-size: 24px; font-weight: 800; height: 54px; justify-content: center; }
 .brand-preview strong { font-size: 15px; }
-.brand-preview p { font-size: 10px; line-height: 1.4; margin: 5px 0 0; }
+.brand-preview p { color: currentColor; font-size: 10px; line-height: 1.4; margin: 5px 0 0; opacity: 0.72; }
+.bid-builder { align-items: stretch; background: var(--ink); color: var(--paper); display: grid; grid-template-columns: 1fr 88px; }
+.bid-builder > div { display: flex; flex-direction: column; padding: 18px; }
+.bid-builder > div > span, .bid-builder small { font-family: "Courier New", monospace; letter-spacing: 0.07em; text-transform: uppercase; }
+.bid-builder > div > span { font-size: 8px; opacity: 0.62; }
+.bid-builder strong { color: var(--acid); font-size: 42px; letter-spacing: -0.07em; line-height: 1; margin: 9px 0; }
+.bid-builder small { font-size: 7px; line-height: 1.4; opacity: 0.62; }
+.bid-builder button { align-items: center; background: var(--acid); border: 0; color: var(--ink); cursor: pointer; display: flex; flex-direction: column; justify-content: center; }
+.bid-builder button b { font-size: 35px; font-weight: 500; line-height: 0.8; }
+.bid-builder button span { font-family: "Courier New", monospace; font-size: 9px; font-weight: 800; margin-top: 8px; }
+.bid-builder button:disabled { cursor: not-allowed; opacity: 0.45; }
 .checkout-button { align-items: center; background: var(--ink); border: 0; color: var(--paper); cursor: pointer; display: flex; font-size: 12px; font-weight: 700; justify-content: space-between; padding: 18px; }
 .checkout-button:disabled { cursor: not-allowed; opacity: 0.45; }
 .checkout-button svg { height: 18px; width: 18px; }
