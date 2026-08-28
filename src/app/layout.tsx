@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
@@ -28,6 +29,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body>{children}</body>
+      <Script
+        id="datafast-analytics"
+        src="https://datafa.st/js/script.js"
+        strategy="afterInteractive"
+        defer
+        data-website-id="dfid_0ezliLEyGAwOxEfgQzU2m"
+        data-domain="brandmyflight.space"
+      />
     </html>
   );
 }
