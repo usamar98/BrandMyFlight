@@ -112,7 +112,7 @@ export const placements = [
     number: "10",
     name: "Small position D",
     tier: "small",
-    price: 1,
+    price: 20,
     short: "Compact founder-supporter mark",
     description:
       "A compact logo position on the Sponsor Pass with a site backlink, inclusion in launch posts, and public trip proof.",
@@ -153,8 +153,18 @@ export type AuctionBid = {
   timeLabel: string;
 };
 
-export function getNextBidAmountCents(currentAmountCents: number) {
-  return currentAmountCents + 500;
+export function getEffectiveBidAmountCents(
+  currentAmountCents: number,
+  startingPriceCents: number,
+) {
+  return Math.max(currentAmountCents, startingPriceCents);
+}
+
+export function getNextBidAmountCents(
+  currentAmountCents: number,
+  startingPriceCents: number,
+) {
+  return getEffectiveBidAmountCents(currentAmountCents, startingPriceCents) + 500;
 }
 
 export function getPlacement(slug: string) {

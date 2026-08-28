@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import {
+  getEffectiveBidAmountCents,
   getNextBidAmountCents,
   getPlacement,
   placements,
@@ -106,6 +107,9 @@ export async function getPlacementInventory(): Promise<PlacementWithState[]> {
       row?.status === "reserved" &&
       row.reservation_expires_at &&
       new Date(row.reservation_expires_at).getTime() < Date.now();
+    const effectiveBidAmountCents = sponsor
+      ? getEffectiveBidAmountCents(Number(sponsor.amount_cents), placement.price * 100)
+      : null;
 
     return {
       ...placement,
@@ -120,9 +124,9 @@ export async function getPlacementInventory(): Promise<PlacementWithState[]> {
             xHandle: sponsor.x_handle,
           }
         : null,
-      currentBid: sponsor ? Number(sponsor.amount_cents) / 100 : null,
+      currentBid: effectiveBidAmountCents === null ? null : effectiveBidAmountCents / 100,
       checkoutPrice: sponsor
-        ? getNextBidAmountCents(Number(sponsor.amount_cents)) / 100
+        ? getNextBidAmountCents(Number(sponsor.amount_cents), placement.price * 100) / 100
         : placement.price,
       hasPendingBid: pendingBySlug.has(placement.slug),
     } as PlacementWithState;
@@ -167,7 +171,7 @@ export async function getAuctionHistory(): Promise<AuctionBid[]> {
       projectName: bid.project_name,
       faviconUrl: bid.favicon_url,
       brandColor: bid.brand_color,
-      amount: Number(bid.amount_cents) / 100,
+      amount: getEffectiveBidAmountCents(Number(bid.amount_cents), placement.price * 100) / 100,
       timeLabel: formatAuctionAge(bid.created_at),
     }];
   });
@@ -212,7 +216,10 @@ export async function getCheckoutQuote(
 
   const currentSponsor = (sponsorships ?? []).find((sponsorship) => sponsorship.status === "paid");
   if (currentSponsor) {
-    const minimumAmountCents = getNextBidAmountCents(Number(currentSponsor.amount_cents));
+    const minimumAmountCents = getNextBidAmountCents(
+      Number(currentSponsor.amount_cents),
+      placement.price * 100,
+    );
     const amountCents = requestedAmountCents ?? minimumAmountCents;
 
     if (!Number.isInteger(amountCents) || amountCents % 100 !== 0) {
@@ -254,6 +261,9 @@ type ReservationInput = {
 };
 
 export async function reservePlacement(input: ReservationInput) {
+  const placement = getPlacement(input.placementSlug);
+  if (!placement) throw new Error("That placement does not exist.");
+
   const supabase = getSupabaseService();
   if (!supabase) throw new Error("Supabase is not configured.");
 
@@ -284,7 +294,10 @@ export async function reservePlacement(input: ReservationInput) {
 
     if (currentSponsorError) throw currentSponsorError;
     if (!currentSponsor) throw new Error("That sponsor was already replaced. Refresh and try again.");
-    const minimumAmountCents = getNextBidAmountCents(Number(currentSponsor.amount_cents));
+    const minimumAmountCents = getNextBidAmountCents(
+      Number(currentSponsor.amount_cents),
+      placement.price * 100,
+    );
     if (
       !Number.isInteger(input.amountCents) ||
       input.amountCents % 100 !== 0 ||
