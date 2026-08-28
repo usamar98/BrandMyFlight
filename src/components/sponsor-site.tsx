@@ -631,6 +631,7 @@ function SponsorDrawer({
   onPreviewChange: (slug: PlacementSlug, preview: ProjectPreview | null) => void;
   onClose: () => void;
 }) {
+  const [checkoutEmail, setCheckoutEmail] = useState("");
   const [startupUrl, setStartupUrl] = useState(initialPreview?.url ?? "");
   const [xHandle, setXHandle] = useState("");
   const [preview, setPreview] = useState<ProjectPreview | null>(initialPreview);
@@ -692,6 +693,7 @@ function SponsorDrawer({
     startTransition(async () => {
       const result = await createCheckout({
         placementSlug: placement.slug,
+        email: checkoutEmail,
         startupUrl,
         xHandle,
         bidAmount: isOutbid ? bidAmount : undefined,
@@ -776,6 +778,19 @@ function SponsorDrawer({
               </div>
             ) : null}
             <label>
+              <span>Checkout email</span>
+              <input
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                placeholder="founder@startup.com"
+                value={checkoutEmail}
+                onChange={(event) => setCheckoutEmail(event.target.value)}
+                required
+              />
+              <small>Prefills Stripe Checkout for your receipt. BrandMyFlight does not save it.</small>
+            </label>
+            <label>
               <span>{isOutbid ? "Challenger startup URL" : "Startup URL"}</span>
               <input
                 type="text"
@@ -837,8 +852,8 @@ function SponsorDrawer({
             <p className="stripe-note">
               <LockKeyhole size={13} />
               {isOutbid
-                ? "Your payment replaces this sponsor; their real Stripe payment is automatically refunded. Demo entries have no charge to refund."
-                : "Stripe asks for your receipt email next. No BrandMyFlight account is created."}
+                ? "Your payment replaces this sponsor, and their original Stripe payment is automatically refunded."
+                : "Your email goes directly to Stripe for checkout and receipts. No BrandMyFlight account is created."}
             </p>
           </form>
         ) : (

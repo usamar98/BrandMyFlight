@@ -112,7 +112,7 @@ export const placements = [
     number: "10",
     name: "Small position D",
     tier: "small",
-    price: 5,
+    price: 1,
     short: "Compact founder-supporter mark",
     description:
       "A compact logo position on the Sponsor Pass with a site backlink, inclusion in launch posts, and public trip proof.",

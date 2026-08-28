@@ -8,6 +8,7 @@ import { getStripe } from "@/lib/stripe";
 
 const checkoutSchema = z.object({
   placementSlug: z.string().min(1).max(60),
+  email: z.string().trim().max(254).email("Enter a valid checkout email."),
   startupUrl: z.string().trim().min(3).max(240),
   xHandle: z
     .string()
@@ -66,6 +67,7 @@ export async function createCheckout(input: unknown): Promise<CheckoutResult> {
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
+      customer_email: parsed.data.email,
       line_items: [
         {
           quantity: 1,
