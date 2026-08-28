@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { FormEvent, useEffect, useState, useTransition } from "react";
 import { createCheckout } from "@/app/actions/create-checkout";
+import { BrandLogo } from "@/components/brand-logo";
 import { SmoothScroll } from "@/components/smooth-scroll";
 import type { PlacementSlug, PlacementWithState } from "@/lib/placements";
 
@@ -29,6 +30,11 @@ type ProjectPreview = {
   name: string;
   tagline: string;
   faviconUrl: string | null;
+};
+
+type VisitorCounts = {
+  liveVisitors: number;
+  totalVisitors: number;
 };
 
 const benefits = [
@@ -49,18 +55,56 @@ const proofSteps = [
 
 export function SponsorSite({ placements }: { placements: PlacementWithState[] }) {
   const [selectedSlug, setSelectedSlug] = useState<PlacementSlug | null>(null);
+  const [visitorCounts, setVisitorCounts] = useState<VisitorCounts>({ liveVisitors: 1, totalVisitors: 1 });
   const selectedPlacement = placements.find((placement) => placement.slug === selectedSlug) ?? null;
   const availableCount = placements.filter((placement) => placement.status === "available").length;
   const fundedTotal = placements
     .filter((placement) => placement.status === "sold")
     .reduce((total, placement) => total + placement.price, 0);
 
+  useEffect(() => {
+    let mounted = true;
+
+    async function refreshVisitorCounts() {
+      try {
+        const response = await fetch("/api/visitors", {
+          method: "POST",
+          cache: "no-store",
+          credentials: "same-origin",
+        });
+
+        if (!response.ok) return;
+
+        const counts = (await response.json()) as VisitorCounts;
+        if (mounted && Number.isFinite(counts.liveVisitors) && Number.isFinite(counts.totalVisitors)) {
+          setVisitorCounts(counts);
+        }
+      } catch {
+        // Keep the non-blocking first-visitor fallback when analytics is unavailable.
+      }
+    }
+
+    function refreshWhenVisible() {
+      if (document.visibilityState === "visible") void refreshVisitorCounts();
+    }
+
+    void refreshVisitorCounts();
+    const heartbeat = window.setInterval(refreshWhenVisible, 45_000);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+
+    return () => {
+      mounted = false;
+      window.clearInterval(heartbeat);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
+  }, []);
+
   return (
     <main id="top">
       <SmoothScroll />
       <nav className="site-nav" aria-label="Primary navigation">
         <a className="wordmark" href="#top" aria-label="BrandMyFlight home">
-          BrandMyFlight<span>®</span>
+          <BrandLogo />
         </a>
         <div className="nav-links">
           <a href="#sponsor-pass">Sponsor Pass</a>
@@ -75,34 +119,32 @@ export function SponsorSite({ placements }: { placements: PlacementWithState[] }
 
       <section className="flight-hero">
         <div className="hero-copy">
-          <motion.p className="eyebrow" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            Lahore → New York · Sponsor campaign 01
+          <motion.p className="eyebrow hero-visitors" aria-live="polite" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <span><b>{visitorCounts.liveVisitors.toLocaleString()}</b> {visitorCounts.liveVisitors === 1 ? "person" : "people"} visiting this site now</span>
+            <i aria-hidden="true" />
+            <span><b>{visitorCounts.totalVisitors.toLocaleString()}</b> {visitorCounts.totalVisitors === 1 ? "visitor" : "visitors"} so far</span>
           </motion.p>
           <motion.h1 initial={{ opacity: 0, y: 34 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}>
-            Ten brands.<br /><em>One funded flight.</em>
+            Your brand, <em>on my flight.</em>
           </motion.h1>
-          <motion.blockquote initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25, duration: 0.7 }}>
-            “Ten brands are buying my flight from Lahore to New York.<br />Your logo travels with me.”
-          </motion.blockquote>
-          <div className="hero-actions">
-            <a className="primary-button" href="#sponsor-pass">Explore the pass <ArrowDownRight size={17} /></a>
-            <a className="text-link" href="#benefits">See what sponsors get <ArrowRight size={15} /></a>
-          </div>
-          <div className="hero-metrics" aria-label="Campaign summary">
-            <div><strong>10</strong><span>exclusive positions</span></div>
-            <div><strong>${fundedTotal.toLocaleString()}</strong><span>funded of $750</span></div>
-            <div><strong>{availableCount}</strong><span>currently available</span></div>
+          <motion.p className="hero-subcopy" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2, duration: 0.65 }}>
+            Your logo flies from Lahore to New York—on the Sponsor Pass, launch posts, airport photos, and trip recap.
+          </motion.p>
+          <div className="hero-progress" aria-label="Campaign summary">
+            <strong>${fundedTotal.toLocaleString()} funded</strong>
+            <i aria-hidden="true" />
+            <span>{availableCount} of 10 spots available</span>
           </div>
         </div>
 
         <motion.div
           className="pass-stage"
-          initial={{ opacity: 0, scale: 0.96, rotate: 1.5 }}
-          animate={{ opacity: 1, scale: 1, rotate: -1.1 }}
+          initial={{ opacity: 0, y: 28 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
         >
           <SponsorPass placements={placements} onSelect={setSelectedSlug} />
-          <p className="pass-stage-note"><Sparkles size={13} /> Every logo position is clickable</p>
+          <p className="pass-stage-note"><Sparkles size={13} /> Tap any spot to claim it</p>
         </motion.div>
       </section>
 
@@ -234,7 +276,7 @@ export function SponsorSite({ placements }: { placements: PlacementWithState[] }
 
       <footer>
         <div>
-          <a className="wordmark" href="#top">BrandMyFlight<span>®</span></a>
+          <a className="wordmark" href="#top" aria-label="BrandMyFlight home"><BrandLogo /></a>
           <p>Ten brands funding one founder flight.<br />Lahore → New York.</p>
         </div>
         <div><span>Explore</span><a href="#sponsor-pass">Sponsor Pass</a><a href="#inventory">Positions</a><a href="#proof">Proof plan</a></div>

@@ -1,11 +1,12 @@
 import Link from "next/link";
+import { BrandLogo } from "@/components/brand-logo";
 
 export const metadata = { title: "Terms — BrandMyFlight" };
 
 export default function TermsPage() {
   return (
     <main className="legal-page">
-      <nav><Link className="wordmark" href="/">BrandMyFlight<span>®</span></Link><Link href="/">Back to Sponsor Pass ↗</Link></nav>
+      <nav><Link className="wordmark" href="/" aria-label="BrandMyFlight home"><BrandLogo /></Link><Link href="/">Back to Sponsor Pass ↗</Link></nav>
       <header><p className="eyebrow">CAMPAIGN 01 · SPONSOR TERMS</p><h1>The clear<br /><em>agreement.</em></h1></header>
       <article>
         <section><h2>What you are buying</h2><p>Your payment purchases the named position for BrandMyFlight Campaign 01: logo placement on the fictional digital Sponsor Pass, a site backlink, launch-post placement, travel photography inclusion, trip recap inclusion, and public proof of campaign delivery.</p></section>

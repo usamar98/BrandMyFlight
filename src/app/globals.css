@@ -29,13 +29,18 @@ svg { flex: 0 0 auto; }
 }
 
 .wordmark {
-  align-items: flex-start;
+  align-items: center;
   display: inline-flex;
   font-size: 19px;
   font-weight: 900;
+  gap: 9px;
   letter-spacing: -0.055em;
 }
-.wordmark span { color: var(--acid); font-size: 7px; letter-spacing: 0; margin: 1px 0 0 3px; }
+.wordmark-ticket { color: var(--ink); flex: 0 0 auto; height: 23px; transform: rotate(-5deg); width: 35px; }
+.wordmark-ticket-route { fill: none; stroke: var(--acid); stroke-linecap: round; stroke-width: 3; }
+.wordmark-ticket-stop { fill: var(--acid); }
+.wordmark-name { font-size: inherit; line-height: 1; }
+.wordmark sup { color: var(--acid); font-size: 7px; letter-spacing: 0; margin-left: 3px; vertical-align: top; }
 
 .site-nav {
   align-items: center;
@@ -68,95 +73,58 @@ svg { flex: 0 0 auto; }
 .nav-cta:hover { background: var(--acid); color: var(--ink); }
 
 .flight-hero {
-  display: grid;
-  grid-template-columns: minmax(430px, 0.7fr) minmax(740px, 1.3fr);
-  min-height: calc(100vh - 72px);
+  min-height: auto;
 }
 .hero-copy {
+  align-items: center;
   display: flex;
   flex-direction: column;
-  min-height: 960px;
-  padding: clamp(55px, 7vw, 105px) 44px 38px 30px;
+  padding: clamp(18px, 2.4vw, 34px) 30px 16px;
+  text-align: center;
 }
 .hero-copy h1 {
-  font-size: clamp(70px, 7.25vw, 124px);
-  letter-spacing: -0.09em;
-  line-height: 0.82;
-  margin: 58px 0 48px;
+  font-size: clamp(40px, 4.8vw, 72px);
+  letter-spacing: -0.075em;
+  line-height: 0.94;
+  margin: 14px 0 10px;
+  white-space: nowrap;
 }
 h1 em, h2 em {
   font-family: Georgia, "Times New Roman", serif;
   font-weight: 400;
 }
-.hero-copy blockquote {
-  border-left: 1px solid var(--ink);
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(18px, 1.7vw, 27px);
-  font-style: italic;
-  line-height: 1.35;
-  margin: 0;
-  max-width: 650px;
-  padding-left: 22px;
-}
-.hero-actions { align-items: center; display: flex; gap: 27px; margin-top: 42px; }
-.primary-button {
-  align-items: center;
-  background: var(--acid);
-  border: 1px solid var(--ink);
-  display: inline-flex;
-  font-size: 11px;
-  font-weight: 800;
-  gap: 28px;
-  padding: 15px 17px;
-}
-.primary-button:hover svg { transform: translate(3px, 3px); }
-.primary-button svg, .text-link svg { transition: transform 0.2s; }
+.hero-visitors { align-items: center; color: var(--muted); display: flex; gap: 11px; }
+.hero-visitors span { align-items: baseline; display: inline-flex; gap: 4px; }
+.hero-visitors b { color: var(--ink); font-size: 12px; letter-spacing: -0.02em; }
+.hero-visitors i { background: var(--acid); border: 1px solid var(--ink); border-radius: 50%; height: 6px; width: 6px; }
+.hero-subcopy { color: var(--muted); font-size: clamp(12px, 0.95vw, 15px); line-height: 1.35; margin: 0; max-width: none; white-space: nowrap; }
+.text-link svg { transition: transform 0.2s; }
 .text-link { align-items: center; border-bottom: 1px solid var(--ink); display: inline-flex; font-size: 10px; font-weight: 700; gap: 10px; padding: 5px 0; }
 .text-link:hover svg { transform: translateX(4px); }
-.hero-metrics {
-  border-top: 1px solid var(--ink);
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  margin-top: auto;
-}
-.hero-metrics div { border-right: 1px solid var(--line); display: flex; flex-direction: column; padding: 20px 15px 0; }
-.hero-metrics div:first-child { padding-left: 0; }
-.hero-metrics div:last-child { border: 0; }
-.hero-metrics strong { font-size: clamp(28px, 3vw, 48px); letter-spacing: -0.06em; }
-.hero-metrics span { color: var(--muted); font-family: "Courier New", monospace; font-size: 8px; margin-top: 5px; text-transform: uppercase; }
+.hero-progress { align-items: center; background: var(--ink); border-radius: 999px; color: var(--paper); display: flex; gap: 12px; justify-content: center; margin-top: 12px; padding: 9px 16px; }
+.hero-progress strong { font-family: "Courier New", monospace; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; }
+.hero-progress span { color: var(--paper); font-family: "Courier New", monospace; font-size: 9px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; }
+.hero-progress i { background: var(--acid); border-radius: 50%; height: 5px; margin: 0 1px; width: 5px; }
 
 .pass-stage {
   align-items: center;
-  background:
-    radial-gradient(circle at 22% 15%, rgba(200, 255, 37, 0.15), transparent 28%),
-    linear-gradient(145deg, #24241f, #11110f 67%);
+  background: var(--paper);
   display: flex;
   justify-content: center;
-  min-height: 960px;
-  overflow: hidden;
-  padding: 55px 24px 80px;
+  overflow: visible;
+  padding: 0 30px 58px;
   position: relative;
 }
 .pass-stage::before {
-  border: 1px solid rgba(243, 240, 231, 0.09);
-  content: "";
-  inset: 18px;
-  pointer-events: none;
-  position: absolute;
+  content: none;
 }
 .pass-stage::after {
-  background-image: radial-gradient(rgba(243, 240, 231, 0.1) 0.7px, transparent 0.7px);
-  background-size: 9px 9px;
-  content: "";
-  inset: 0;
-  opacity: 0.16;
-  pointer-events: none;
-  position: absolute;
+  content: none;
 }
 .pass-stage-note {
   align-items: center;
-  bottom: 28px;
-  color: rgba(243, 240, 231, 0.62);
+  bottom: 18px;
+  color: var(--muted);
   display: flex;
   font-family: "Courier New", monospace;
   font-size: 8px;
@@ -173,7 +141,7 @@ h1 em, h2 em {
   background: var(--paper);
   border: 1px solid #090908;
   border-radius: 18px;
-  box-shadow: 0 35px 100px rgba(0, 0, 0, 0.52), 0 2px 0 rgba(255, 255, 255, 0.2) inset;
+  box-shadow: 0 28px 80px rgba(17, 17, 15, 0.16), 0 2px 0 rgba(255, 255, 255, 0.45) inset;
   max-width: 920px;
   overflow: hidden;
   position: relative;
@@ -182,7 +150,7 @@ h1 em, h2 em {
 }
 .sponsor-pass::before,
 .sponsor-pass::after {
-  background: #171714;
+  background: var(--paper);
   border: 1px solid #090908;
   border-radius: 50%;
   content: "";
@@ -195,7 +163,7 @@ h1 em, h2 em {
 }
 .sponsor-pass::before { left: -19px; }
 .sponsor-pass::after { right: -19px; }
-.pass-header { align-items: center; border-bottom: 1px solid var(--ink); display: flex; justify-content: space-between; padding: 25px 28px 20px; }
+.pass-header { align-items: center; border-bottom: 1px solid var(--ink); display: flex; justify-content: space-between; padding: 15px 24px 12px; }
 .indie-air { align-items: center; display: flex; gap: 10px; }
 .indie-air > span { align-items: center; background: var(--acid); border-radius: 50%; display: flex; height: 37px; justify-content: center; width: 37px; }
 .indie-air svg { height: 19px; transform: rotate(-20deg); width: 19px; }
@@ -214,21 +182,21 @@ h1 em, h2 em {
   padding: 7px 12px;
   text-align: center;
 }
-.pass-route { align-items: center; border-bottom: 1px solid var(--ink); display: grid; grid-template-columns: 1fr 0.82fr 1fr; padding: 22px 28px 18px; }
+.pass-route { align-items: center; border-bottom: 1px solid var(--ink); display: grid; grid-template-columns: 1fr 0.82fr 1fr; padding: 14px 24px 11px; }
 .pass-route > div:not(.route-flight) { display: flex; flex-direction: column; }
 .pass-route > div:last-child { align-items: flex-end; text-align: right; }
 .pass-route small, .pass-route span { font-family: "Courier New", monospace; font-size: 6px; letter-spacing: 0.08em; text-transform: uppercase; }
-.pass-route strong { font-size: clamp(48px, 6vw, 76px); letter-spacing: -0.1em; line-height: 0.84; margin: 7px 0 4px; }
+.pass-route strong { font-size: clamp(43px, 5.4vw, 67px); letter-spacing: -0.1em; line-height: 0.84; margin: 5px 0 3px; }
 .route-flight { align-items: center; display: flex; gap: 9px; justify-content: center; }
 .route-flight i { border-top: 1px dashed var(--ink); flex: 1; }
 .route-flight svg { height: 22px; transform: rotate(8deg); width: 22px; }
-.pass-details { border-bottom: 1px solid var(--ink); display: grid; grid-template-columns: 1.5fr 0.8fr 0.55fr 1.5fr; margin: 0; padding: 0 28px; }
-.pass-details div { border-right: 1px solid var(--line); padding: 11px 10px; }
+.pass-details { border-bottom: 1px solid var(--ink); display: grid; grid-template-columns: 1.5fr 0.8fr 0.55fr 1.5fr; margin: 0; padding: 0 24px; }
+.pass-details div { border-right: 1px solid var(--line); padding: 8px 9px; }
 .pass-details div:first-child { padding-left: 0; }
 .pass-details div:last-child { border: 0; }
 .pass-details dt { color: var(--muted); font-family: "Courier New", monospace; font-size: 6px; letter-spacing: 0.1em; text-transform: uppercase; }
 .pass-details dd { font-size: 9px; font-weight: 800; margin: 5px 0 0; text-transform: uppercase; }
-.pass-sponsors { display: grid; gap: 7px; grid-template-columns: repeat(12, 1fr); padding: 14px; }
+.pass-sponsors { display: grid; gap: 5px; grid-template-columns: repeat(12, 1fr); padding: 10px; }
 .pass-slot {
   background: transparent;
   border: 1px solid rgba(17, 17, 15, 0.55);
@@ -243,10 +211,10 @@ h1 em, h2 em {
   transition: background 0.18s, color 0.18s, transform 0.18s;
 }
 .pass-slot:hover, .pass-slot:focus-visible { background: var(--acid); color: var(--ink); outline: 0; transform: translateY(-2px); }
-.pass-slot-presenting { background: var(--ink); color: var(--paper); grid-column: span 12; min-height: 98px; }
-.pass-slot-premium { grid-column: span 6; min-height: 82px; }
-.pass-slot-medium { grid-column: span 4; min-height: 72px; }
-.pass-slot-small { grid-column: span 3; min-height: 63px; }
+.pass-slot-presenting { background: var(--ink); color: var(--paper); grid-column: span 12; min-height: 76px; }
+.pass-slot-premium { grid-column: span 6; min-height: 64px; }
+.pass-slot-medium { grid-column: span 4; min-height: 56px; }
+.pass-slot-small { grid-column: span 3; min-height: 50px; }
 .pass-slot[data-status="sold"] { background: var(--acid); color: var(--ink); }
 .pass-slot[data-status="reserved"] { background: var(--paper-deep); }
 .pass-slot-meta, .pass-slot-foot { font-family: "Courier New", monospace; font-size: 6.5px; letter-spacing: 0.08em; text-transform: uppercase; }
@@ -405,6 +373,7 @@ main > footer { background: var(--ink); color: var(--paper); display: grid; gap:
 main > footer > div { display: flex; flex-direction: column; gap: 11px; }
 main > footer > div:first-child { gap: 18px; }
 main > footer .wordmark { font-size: 21px; }
+main > footer .wordmark-ticket { color: var(--paper); }
 main > footer p { color: rgba(243, 240, 231, 0.55); font-size: 11px; line-height: 1.5; margin: 0; }
 main > footer div > span { color: rgba(243, 240, 231, 0.42); font-family: "Courier New", monospace; font-size: 8px; letter-spacing: 0.1em; margin-bottom: 12px; text-transform: uppercase; }
 main > footer div a:not(.wordmark) { align-items: center; display: flex; font-size: 11px; gap: 5px; }
@@ -474,9 +443,8 @@ main > footer div a:not(.wordmark) { align-items: center; display: flex; font-si
 @media (max-width: 1180px) {
   .site-nav { grid-template-columns: 1fr auto; }
   .nav-links { display: none; }
-  .flight-hero { grid-template-columns: 1fr; }
-  .hero-copy { min-height: 700px; }
-  .pass-stage { min-height: 820px; }
+  .hero-copy { padding-top: 24px; }
+  .hero-subcopy { white-space: normal; }
   .funding-intro { grid-template-columns: 120px 1fr; }
   .funding-intro > p:last-child { grid-column: 2; max-width: 550px; }
   .inventory-labels, .inventory-row { grid-template-columns: 58px minmax(280px, 1fr) 95px 95px 75px 25px; }
@@ -489,14 +457,17 @@ main > footer div a:not(.wordmark) { align-items: center; display: flex; font-si
 @media (max-width: 720px) {
   .site-nav { height: 62px; padding: 0 18px; }
   .nav-cta { font-size: 9px; gap: 8px; padding: 11px 12px; }
-  .flight-hero { display: block; }
-  .hero-copy { min-height: 720px; padding: 54px 18px 28px; }
-  .hero-copy h1 { font-size: 17vw; margin: 45px 0 38px; }
-  .hero-copy blockquote { font-size: 17px; }
-  .hero-actions { align-items: flex-start; flex-direction: column; gap: 16px; margin-top: 34px; }
-  .hero-metrics strong { font-size: 27px; }
-  .hero-metrics span { font-size: 6px; }
-  .pass-stage { min-height: 690px; padding: 58px 13px 68px; }
+  .hero-copy { padding: 20px 18px 14px; }
+  .hero-visitors { gap: 7px; white-space: nowrap; }
+  .hero-visitors span { font-size: 7px; gap: 3px; letter-spacing: 0.06em; }
+  .hero-visitors b { font-size: 9px; }
+  .hero-visitors i { height: 5px; width: 5px; }
+  .hero-copy h1 { font-size: 10.7vw; margin: 14px 0 10px; }
+  .hero-subcopy { font-size: 12px; max-width: 430px; }
+  .hero-progress { gap: 8px; margin-top: 12px; padding: 9px 14px; white-space: nowrap; }
+  .hero-progress strong { font-size: 9px; }
+  .hero-progress span { font-size: 7px; }
+  .pass-stage { padding: 0 10px 54px; }
   .sponsor-pass { border-radius: 12px; transform: scale(1.01); }
   .pass-header { padding: 13px 14px 11px; }
   .indie-air > span { height: 30px; width: 30px; }

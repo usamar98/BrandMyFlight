@@ -21,6 +21,33 @@ export function getSupabaseService() {
   return serviceClient;
 }
 
+export type VisitorCounts = {
+  liveVisitors: number;
+  totalVisitors: number;
+};
+
+type VisitorCountRow = {
+  live_visitors: number | string;
+  total_visitors: number | string;
+};
+
+export async function recordSiteVisit(sessionId: string): Promise<VisitorCounts | null> {
+  const supabase = getSupabaseService();
+  if (!supabase) return null;
+
+  const { data, error } = await supabase
+    .rpc("record_site_visit", { p_session_id: sessionId })
+    .single();
+
+  if (error) throw error;
+
+  const row = data as VisitorCountRow;
+  return {
+    liveVisitors: Number(row.live_visitors),
+    totalVisitors: Number(row.total_visitors),
+  };
+}
+
 export async function getPlacementInventory(): Promise<PlacementWithState[]> {
   const supabase = getSupabaseService();
   if (!supabase) {
