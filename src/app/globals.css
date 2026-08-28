@@ -119,7 +119,7 @@ h1 em, h2 em {
   z-index: 0;
 }
 .hero-plane {
-  opacity: 0.72;
+  opacity: 0.86;
   position: absolute;
   transition: filter 0.35s ease, opacity 0.35s ease;
   width: min(var(--plane-width), max(80px, calc((100vw - 960px) / 2 - 14px)));
@@ -143,19 +143,59 @@ h1 em, h2 em {
 .hero-plane[data-branded="true"] { opacity: 0.94; }
 .hero-plane[data-active="true"] { filter: drop-shadow(0 0 13px rgba(200, 255, 37, 0.82)); opacity: 1; }
 .hero-plane-flight { transform-origin: center; }
-.sponsor-plane { display: block; height: auto; overflow: visible; width: 100%; }
-.plane-shadow { fill: rgba(17, 17, 15, 0.14); filter: blur(3px); }
-.plane-tail-wing { fill: var(--paper); stroke: var(--ink); stroke-linejoin: round; stroke-width: 2; }
-.plane-main-wing { fill: var(--acid); stroke: var(--ink); stroke-linejoin: round; stroke-width: 2; }
-.plane-fuselage { fill: var(--ink); stroke: var(--ink); stroke-width: 2; }
-.plane-cabin { fill: var(--paper-deep); stroke: var(--ink); stroke-width: 1.5; }
-.plane-stripe { fill: none; stroke: var(--acid); stroke-width: 3; }
-.plane-engine { fill: var(--paper); stroke: var(--ink); stroke-width: 2; }
-.plane-logo-panel { fill: var(--paper); stroke: var(--ink); stroke-width: 1.5; }
-.plane-logo-placeholder { fill: var(--ink); font-family: Arial, sans-serif; font-size: 23px; font-weight: 900; }
-.plane-brand-name { fill: var(--paper); font-family: Arial, sans-serif; font-size: 8px; font-weight: 900; letter-spacing: 0.03em; }
-.plane-position-number { fill: var(--acid); font-family: "Courier New", monospace; font-size: 10px; font-weight: 900; }
-.plane-wing-label { fill: var(--ink); font-family: "Courier New", monospace; font-size: 7px; font-weight: 900; letter-spacing: 0.08em; }
+.sponsor-plane {
+  display: block;
+  filter: drop-shadow(0 8px 7px rgba(17, 17, 15, 0.18));
+  height: auto;
+  overflow: visible;
+  width: 100%;
+}
+.plane-shadow { fill: rgba(17, 17, 15, 0.18); filter: blur(6px); }
+.plane-far-wing,
+.plane-near-wing,
+.plane-rear-stabilizer,
+.plane-vertical-tail,
+.plane-fuselage {
+  stroke: var(--ink);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.6;
+}
+.plane-far-wing-accent,
+.plane-wing-tip,
+.plane-tail-accent { fill: var(--acid); stroke: var(--ink); stroke-linejoin: round; stroke-width: 1.6; }
+.plane-panel-line,
+.plane-service-line,
+.plane-engine-detail {
+  fill: none;
+  opacity: 0.62;
+  stroke: var(--ink);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.35;
+}
+.plane-far-engine { fill: var(--paper-deep); stroke: var(--ink); stroke-linejoin: round; stroke-width: 2; }
+.plane-wing-wrap { fill: var(--ink); opacity: 0.94; stroke: var(--ink); stroke-linejoin: round; stroke-width: 1.4; }
+.plane-engine-pod path { stroke: var(--ink); stroke-linejoin: round; stroke-width: 2; }
+.plane-engine-pod ellipse { fill: var(--ink); stroke: var(--acid); stroke-width: 1.8; }
+.plane-tail-wrap { fill: var(--ink); stroke: var(--ink); stroke-linejoin: round; stroke-width: 1.5; }
+.plane-brand-wrap { fill: var(--ink); }
+.plane-wrap-highlight { fill: none; opacity: 0.88; stroke: var(--acid); stroke-linecap: round; stroke-width: 3.4; }
+.plane-belly-shade { fill: rgba(17, 17, 15, 0.2); }
+.plane-fuselage-highlight { fill: none; opacity: 0.82; stroke: #fffef7; stroke-linecap: round; stroke-width: 3; }
+.plane-window-line { fill: none; stroke: var(--paper); stroke-dasharray: 1 7; stroke-linecap: round; stroke-width: 3.2; }
+.plane-window-rail { fill: none; opacity: 0.85; stroke: var(--acid); stroke-linecap: round; stroke-width: 1.2; }
+.plane-cockpit-window { fill: var(--ink); stroke: var(--ink); stroke-linejoin: round; stroke-width: 1; }
+.plane-nose-detail { fill: none; stroke: var(--ink); stroke-linecap: round; stroke-width: 1.2; }
+.plane-door rect { fill: rgba(255, 253, 244, 0.14); stroke: var(--paper); stroke-width: 1.4; }
+.plane-door circle { fill: var(--acid); }
+.plane-navigation-light { fill: #ff3b30; stroke: var(--paper); stroke-width: 1.4; }
+.plane-logo-panel { fill: var(--acid); stroke: var(--ink); stroke-width: 2.2; }
+.plane-logo-placeholder { fill: var(--ink); font-family: Arial, sans-serif; font-size: 25px; font-weight: 900; }
+.plane-brand-name { fill: var(--paper); font-family: Arial, sans-serif; font-size: 13px; font-weight: 900; letter-spacing: 0.025em; }
+.plane-brand-subline { fill: var(--acid); font-family: "Courier New", monospace; font-size: 5.5px; font-weight: 900; letter-spacing: 0.13em; }
+.plane-slot-badge { fill: var(--acid); stroke: var(--ink); stroke-width: 2; }
+.plane-position-number { fill: var(--ink); font-family: "Courier New", monospace; font-size: 9px; font-weight: 900; }
 
 .pass-stage {
   align-items: center;

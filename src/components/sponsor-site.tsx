@@ -19,7 +19,7 @@ import {
   Video,
   X,
 } from "lucide-react";
-import { FormEvent, useCallback, useEffect, useState, useTransition } from "react";
+import { FormEvent, useCallback, useEffect, useId, useState, useTransition } from "react";
 import { createCheckout } from "@/app/actions/create-checkout";
 import { BrandLogo } from "@/components/brand-logo";
 import { SmoothScroll } from "@/components/smooth-scroll";
@@ -398,31 +398,138 @@ function SponsorPlane({
   number: string;
   side: "left" | "right";
 }) {
-  const planeTransform = side === "right" ? "translate(260 0) scale(-1 1)" : undefined;
-  const shortName = brandName.toUpperCase().slice(0, 18);
+  const paintId = useId().replaceAll(":", "");
+  const bodyGradientId = `${paintId}-body`;
+  const wingGradientId = `${paintId}-wing`;
+  const metalGradientId = `${paintId}-metal`;
+  const fuselageClipId = `${paintId}-fuselage`;
+  const planeTransform = side === "right" ? "translate(360 0) scale(-1 1)" : undefined;
+  const shortName = brandName.toUpperCase().slice(0, 16);
+  const sponsorLabel = side === "left"
+    ? { x: 211, y: 108, rotation: -31 }
+    : { x: 149, y: 108, rotation: 31 };
+  const wingLogo = side === "left"
+    ? { x: 262, y: 157, rotation: 45 }
+    : { x: 98, y: 157, rotation: -45 };
+  const slotBadge = side === "left"
+    ? { x: 91, y: 159, rotation: -16 }
+    : { x: 269, y: 159, rotation: 16 };
+  const fuselagePath = "M48 164C84 157 119 141 151 121L299 27C317 15 337 14 346 21C352 29 346 41 333 50L191 145C150 172 107 186 65 188C54 188 47 181 46 173C45 168 46 166 48 164Z";
 
   return (
-    <svg className="sponsor-plane" viewBox="0 0 260 110" focusable="false">
-      <ellipse className="plane-shadow" cx="130" cy="92" rx="86" ry="8" />
+    <svg className="sponsor-plane" viewBox="0 0 360 220" focusable="false">
+      <defs>
+        <linearGradient id={bodyGradientId} x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0" stopColor="#fffdf4" />
+          <stop offset="0.5" stopColor="#f0ecdf" />
+          <stop offset="1" stopColor="#bdb7a9" />
+        </linearGradient>
+        <linearGradient id={wingGradientId} x1="0" x2="0.9" y1="0" y2="1">
+          <stop offset="0" stopColor="#fffdf4" />
+          <stop offset="0.72" stopColor="#d8d2c5" />
+          <stop offset="1" stopColor="#aaa497" />
+        </linearGradient>
+        <linearGradient id={metalGradientId} x1="0" x2="1">
+          <stop offset="0" stopColor="#1b1b18" />
+          <stop offset="0.48" stopColor="#f5f1e6" />
+          <stop offset="1" stopColor="#55544e" />
+        </linearGradient>
+        <clipPath id={fuselageClipId}>
+          <path d={fuselagePath} />
+        </clipPath>
+      </defs>
+
+      <ellipse className="plane-shadow" cx="180" cy="190" rx="126" ry="14" transform="rotate(-8 180 190)" />
       <g transform={planeTransform}>
-        <path className="plane-tail-wing" d="M63 43 31 20h20l42 24Zm30 23L51 90H31l32-24Z" />
-        <path className="plane-main-wing" d="m151 43-66-38h29l79 39Zm42 23-79 39H85l66-39Z" />
-        <path className="plane-fuselage" d="M17 43h188c20 0 38 5 50 12-12 7-30 12-50 12H17C9 67 4 62 4 55s5-12 13-12Z" />
-        <path className="plane-cabin" d="M188 47h22c14 0 27 3 36 8-9 5-22 8-36 8h-22Z" />
-        <path className="plane-stripe" d="M25 55h157" />
-        <circle className="plane-engine" cx="132" cy="31" r="9" />
-        <circle className="plane-engine" cx="132" cy="79" r="9" />
+        <path
+          className="plane-far-wing"
+          d="M182 96L60 62L38 73L157 119L207 101Z"
+          fill={`url(#${wingGradientId})`}
+        />
+        <path className="plane-far-wing-accent" d="M61 63L38 73L158 119L171 114Z" />
+        <path className="plane-panel-line" d="M66 72L159 110M93 75L101 88M124 84L130 99M154 92L158 107" />
+        <path className="plane-far-engine" d="M99 73C104 63 115 63 123 76L118 82L103 79Z" />
+        <path className="plane-far-engine" d="M161 89C166 79 178 80 185 94L179 100L165 96Z" />
+
+        <path
+          className="plane-near-wing"
+          d="M187 119L273 204C280 211 290 209 295 202C298 198 296 192 294 187L248 100Z"
+          fill={`url(#${wingGradientId})`}
+        />
+        <path className="plane-wing-wrap" d="M224 132L274 185L292 180L251 105Z" />
+        <path className="plane-wing-tip" d="M273 204C280 211 290 209 295 202L292 188L280 193Z" />
+        <path className="plane-panel-line" d="M202 120L280 196M226 116L291 183M244 123L232 144M256 146L247 161M270 169L261 179" />
+
+        <g className="plane-engine-pod">
+          <path d="M248 118C259 113 273 119 276 129L277 142C276 151 267 154 258 148L251 137Z" fill={`url(#${metalGradientId})`} />
+          <ellipse cx="272" cy="132" rx="5" ry="9" />
+          <path className="plane-engine-detail" d="M255 121L261 146" />
+        </g>
+        <g className="plane-engine-pod">
+          <path d="M273 145C285 140 298 147 300 157L299 170C297 178 287 181 279 174L274 164Z" fill={`url(#${metalGradientId})`} />
+          <ellipse cx="296" cy="160" rx="5" ry="9" />
+          <path className="plane-engine-detail" d="M280 148L284 173" />
+        </g>
+
+        <path
+          className="plane-rear-stabilizer"
+          d="M83 151L18 171L59 190L128 161Z"
+          fill={`url(#${wingGradientId})`}
+        />
+        <path className="plane-tail-accent" d="M18 171L59 190L76 183L38 169Z" />
+        <path className="plane-panel-line" d="M35 173L76 183M57 164L96 174" />
+
+        <path
+          className="plane-vertical-tail"
+          d="M91 156L65 83C62 73 70 67 79 72L153 126L131 157Z"
+          fill={`url(#${wingGradientId})`}
+        />
+        <path className="plane-tail-wrap" d="M66 85C63 75 70 68 79 72L101 89L89 130Z" />
+        <path className="plane-panel-line" d="M84 86L119 126M91 103L80 139M101 120L89 148" />
+
+        <path className="plane-fuselage" d={fuselagePath} fill={`url(#${bodyGradientId})`} />
+        <g clipPath={`url(#${fuselageClipId})`}>
+          <path className="plane-brand-wrap" d="M112 150C158 132 210 102 304 43L316 57C224 116 170 146 124 163Z" />
+          <path className="plane-wrap-highlight" d="M119 149C166 130 219 98 307 44" />
+          <path className="plane-belly-shade" d="M49 172C94 173 137 154 181 128C147 163 106 184 64 188C54 188 48 181 49 172Z" />
+        </g>
+        <path className="plane-fuselage-highlight" d="M73 158C119 147 157 123 195 99L306 29" />
+        <path className="plane-window-line" d="M137 135C183 113 235 82 308 36" />
+        <path className="plane-window-rail" d="M132 141C181 119 238 84 315 35" />
+
+        <path className="plane-cockpit-window" d="M312 30L326 24L331 26L321 34Z" />
+        <path className="plane-cockpit-window" d="M326 23L337 22L339 25L331 28Z" />
+        <path className="plane-nose-detail" d="M333 31C340 29 344 29 348 30" />
+
+        <g className="plane-door" transform="rotate(-29 132 143)">
+          <rect x="126" y="134" width="11" height="18" rx="3" />
+          <circle cx="134" cy="143" r="1.2" />
+        </g>
+        <g className="plane-door" transform="rotate(-31 288 55)">
+          <rect x="283" y="48" width="10" height="16" rx="3" />
+          <circle cx="290" cy="56" r="1.1" />
+        </g>
+        <path className="plane-service-line" d="M74 171C110 165 139 151 169 133M195 112L293 49" />
+        <circle className="plane-navigation-light" cx="295" cy="201" r="3" />
       </g>
-      <g className="plane-livery">
-        <rect className="plane-logo-panel" x="99" y="16" width="48" height="31" rx="4" />
+
+      <g transform={`rotate(${sponsorLabel.rotation} ${sponsorLabel.x} ${sponsorLabel.y})`}>
+        <text className="plane-brand-name" x={sponsorLabel.x} y={sponsorLabel.y} textAnchor="middle">{shortName}</text>
+        <text className="plane-brand-subline" x={sponsorLabel.x} y={sponsorLabel.y + 10} textAnchor="middle">SPONSOR PASS · BUILD001</text>
+      </g>
+
+      <g transform={`rotate(${wingLogo.rotation} ${wingLogo.x} ${wingLogo.y})`}>
+        <rect className="plane-logo-panel" x={wingLogo.x - 16} y={wingLogo.y - 16} width="32" height="32" rx="7" />
         {faviconUrl ? (
-          <image href={faviconUrl} x="106" y="20" width="34" height="23" preserveAspectRatio="xMidYMid meet" />
+          <image href={faviconUrl} x={wingLogo.x - 11} y={wingLogo.y - 11} width="22" height="22" preserveAspectRatio="xMidYMid meet" />
         ) : (
-          <text className="plane-logo-placeholder" x="123" y="36" textAnchor="middle">+</text>
+          <text className="plane-logo-placeholder" x={wingLogo.x} y={wingLogo.y + 8} textAnchor="middle">+</text>
         )}
-        <text className="plane-brand-name" x="102" y="60" textAnchor="middle">{shortName}</text>
-        <text className="plane-position-number" x="48" y="60" textAnchor="middle">#{number}</text>
-        <text className="plane-wing-label" x="122" y="92" textAnchor="middle">SPONSOR PASS</text>
+      </g>
+
+      <g transform={`rotate(${slotBadge.rotation} ${slotBadge.x} ${slotBadge.y})`}>
+        <circle className="plane-slot-badge" cx={slotBadge.x} cy={slotBadge.y} r="14" />
+        <text className="plane-position-number" x={slotBadge.x} y={slotBadge.y + 4} textAnchor="middle">#{number}</text>
       </g>
     </svg>
   );
