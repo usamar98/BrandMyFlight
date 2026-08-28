@@ -417,9 +417,9 @@ function HeroFleet({
             <motion.div
               className="hero-plane-flight"
               animate={{
-                x: ["72vw", "0vw", "-54vw", "-76vw"],
-                y: [-38, 0, 20, 32],
-                rotate: [-139, -135, -133, -132],
+                x: ["-76vw", "0vw", "54vw", "78vw"],
+                y: [30, 0, -16, -28],
+                rotate: [-2.2, 0, 1.2, 2],
                 opacity: [0, 0.98, 0.9, 0],
               }}
               transition={{
@@ -470,58 +470,55 @@ function SponsorPlane({
   const shortTagline = tagline.slice(0, 48);
   const inkColor = getContrastColor(brandColor);
   const wingLogos = [
-    { x: 101, y: 82, rotation: 18 },
-    { x: 258, y: 178, rotation: 18 },
+    { x: 254, y: 49 },
+    { x: 254, y: 141 },
   ];
 
   return (
     <svg
       className="sponsor-plane"
-      viewBox="0 0 360 250"
+      viewBox="0 0 420 190"
       focusable="false"
       style={{ "--plane-color": brandColor, "--plane-ink": inkColor } as CSSProperties}
     >
       <title>{`${brandName} sponsor plane`}</title>
-      <ellipse className="plane-shadow" cx="180" cy="221" rx="128" ry="12" transform="rotate(-8 180 221)" />
+      <ellipse className="plane-shadow" cx="222" cy="170" rx="148" ry="9" />
 
-      <path className="plane-shape plane-left-wing" d="M184 112L63 61L48 76L159 139L211 123Z" />
-      <path className="plane-shape plane-right-wing" d="M194 122L274 217Q280 224 289 218L296 211L230 91Z" />
-      <path className="plane-shape plane-left-tail" d="M108 177L42 194L58 208L132 188Z" />
-      <path className="plane-shape plane-right-tail" d="M119 181L135 231L150 223L146 167Z" />
+      <path className="plane-shape plane-left-wing" d="M176 82L250 15Q258 7 267 13L285 27L246 88Z" />
+      <path className="plane-shape plane-right-wing" d="M176 108L250 175Q258 183 267 177L285 163L246 102Z" />
+      <path className="plane-shape plane-left-tail" d="M78 84L108 46Q113 40 120 45L134 57L116 90Z" />
+      <path className="plane-shape plane-right-tail" d="M78 106L108 144Q113 150 120 145L134 133L116 100Z" />
 
-      <path className="plane-shape plane-engine" d="M91 67L105 53L119 65L117 78Z" />
-      <path className="plane-shape plane-engine" d="M139 87L153 72L168 86L163 101Z" />
-      <path className="plane-shape plane-engine" d="M251 151L270 151L277 168L263 175Z" />
-      <path className="plane-shape plane-engine" d="M268 181L287 181L295 198L280 205Z" />
+      <path className="plane-shape plane-engine" d="M222 39Q222 31 230 28H247Q254 31 253 39L248 55H227Z" />
+      <path className="plane-shape plane-engine" d="M252 23Q252 16 259 13H275Q281 16 281 23L276 38H257Z" />
+      <path className="plane-shape plane-engine" d="M222 151Q222 159 230 162H247Q254 159 253 151L248 135H227Z" />
+      <path className="plane-shape plane-engine" d="M252 167Q252 174 259 177H275Q281 174 281 167L276 152H257Z" />
 
-      <path
-        className="plane-shape plane-fuselage"
-        d="M82 211Q77 205 83 198L159 128L284 28Q304 12 319 18Q333 25 321 43L216 156L111 219Q93 229 82 211Z"
-      />
-      <path className="plane-outline-detail" d="M91 205L166 136M294 31Q306 25 316 28M112 197L128 181M164 143L180 127" />
-      <path className="plane-cockpit" d="M292 31Q307 20 318 25L308 39Z" />
-      <path className="plane-window-row" d="M231 82L281 41" />
+      <path className="plane-shape plane-fuselage" d="M43 99Q35 95 43 91L83 80L283 67Q337 63 388 83Q405 90 405 95Q405 100 388 107Q337 127 283 123L83 110Z" />
+      <path className="plane-outline-detail" d="M51 95H142M311 74Q350 74 385 88M311 116Q350 116 385 102M93 85L115 95L93 105" />
+      <path className="plane-cockpit" d="M356 78Q380 82 397 92L371 94Z" />
+      <path className="plane-window-row" d="M292 82H344" />
 
       {isBranded && faviconUrl
         ? wingLogos.map((logo, index) => (
-            <g key={logo.x} transform={`rotate(${logo.rotation} ${logo.x} ${logo.y})`}>
-              <rect className="plane-logo-panel" x={logo.x - 19} y={logo.y - 19} width="38" height="38" rx="9" />
-              <image href={faviconUrl} x={logo.x - 14} y={logo.y - 14} width="28" height="28" preserveAspectRatio="xMidYMid meet" />
-              <text className="plane-wing-label" x={logo.x} y={logo.y + 29} textAnchor="middle">{index === 0 ? "LEFT WING" : "RIGHT WING"}</text>
+            <g key={logo.x + logo.y}>
+              <rect className="plane-logo-panel" x={logo.x - 18} y={logo.y - 18} width="36" height="36" rx="9" />
+              <image href={faviconUrl} x={logo.x - 13} y={logo.y - 13} width="26" height="26" preserveAspectRatio="xMidYMid meet" />
+              <text className="plane-wing-label" x={logo.x} y={logo.y + (index === 0 ? 27 : -23)} textAnchor="middle">{index === 0 ? "LEFT WING" : "RIGHT WING"}</text>
             </g>
           ))
         : null}
 
-      <g className="plane-copy" transform="rotate(-38 207 112)">
-        <rect x="128" y="88" width="158" height="51" rx="10" />
-        <text className="plane-brand-name" x="207" y="105" textAnchor="middle">{shortName}</text>
-        <text className="plane-brand-handle" x="207" y="117" textAnchor="middle">{shortHandle}</text>
-        <text className="plane-brand-tagline" x="207" y="130" textAnchor="middle">{shortTagline}</text>
+      <g className="plane-copy">
+        <rect x="130" y="74" width="162" height="42" rx="10" />
+        <text className="plane-brand-name" x="211" y="88" textAnchor="middle">{shortName}</text>
+        <text className="plane-brand-handle" x="211" y="99" textAnchor="middle">{shortHandle}</text>
+        <text className="plane-brand-tagline" x="211" y="109" textAnchor="middle">{shortTagline}</text>
       </g>
 
-      <g className="plane-slot" transform="rotate(-38 112 188)">
-        <circle className="plane-slot-badge" cx="112" cy="188" r="15" />
-        <text className="plane-position-number" x="112" y="192" textAnchor="middle">#{number}</text>
+      <g className="plane-slot">
+        <circle className="plane-slot-badge" cx="104" cy="95" r="14" />
+        <text className="plane-position-number" x="104" y="99" textAnchor="middle">#{number}</text>
       </g>
     </svg>
   );
