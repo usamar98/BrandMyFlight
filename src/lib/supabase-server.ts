@@ -4,6 +4,7 @@ import {
   getNextBidAmountCents,
   getPlacement,
   placements,
+  type AuctionBid,
   type PlacementWithState,
 } from "@/lib/placements";
 
@@ -125,6 +126,50 @@ export async function getPlacementInventory(): Promise<PlacementWithState[]> {
         : placement.price,
       hasPendingBid: pendingBySlug.has(placement.slug),
     } as PlacementWithState;
+  });
+}
+
+function formatAuctionAge(createdAt: string) {
+  const elapsedMinutes = Math.max(0, Math.floor((Date.now() - new Date(createdAt).getTime()) / 60_000));
+  if (elapsedMinutes < 1) return "just now";
+  if (elapsedMinutes < 60) return `${elapsedMinutes}m ago`;
+  const elapsedHours = Math.floor(elapsedMinutes / 60);
+  if (elapsedHours < 24) return `${elapsedHours}h ago`;
+  const elapsedDays = Math.floor(elapsedHours / 24);
+  return `${elapsedDays}d ago`;
+}
+
+export async function getAuctionHistory(): Promise<AuctionBid[]> {
+  const supabase = getSupabaseService();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from("flight_sponsorships")
+    .select("id,placement_slug,project_name,favicon_url,brand_color,amount_cents,status,created_at")
+    .in("status", ["paid", "refunded", "outbid"])
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  if (error) {
+    console.error("Unable to load auction history", error);
+    return [];
+  }
+
+  return (data ?? []).flatMap((bid) => {
+    const placement = getPlacement(bid.placement_slug);
+    if (!placement || !["paid", "refunded", "outbid"].includes(bid.status)) return [];
+
+    return [{
+      id: bid.id,
+      placementSlug: placement.slug,
+      placementName: placement.name,
+      tier: placement.tier,
+      projectName: bid.project_name,
+      faviconUrl: bid.favicon_url,
+      brandColor: bid.brand_color,
+      amount: Number(bid.amount_cents) / 100,
+      timeLabel: formatAuctionAge(bid.created_at),
+    }];
   });
 }
 

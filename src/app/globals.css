@@ -18,6 +18,16 @@ button { font: inherit; }
 a { color: inherit; text-decoration: none; }
 svg { flex: 0 0 auto; }
 ::selection { background: var(--acid); color: var(--ink); }
+.sr-only {
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  width: 1px;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
 
 .eyebrow {
   font-family: "Courier New", monospace;
@@ -113,36 +123,25 @@ h1 em, h2 em {
 
 .hero-fleet {
   inset: 0;
-  overflow: hidden;
+  overflow: visible;
   pointer-events: none;
   position: absolute;
-  z-index: 0;
+  z-index: 4;
 }
 .hero-plane {
-  opacity: 0.92;
+  left: 50%;
+  opacity: 1;
   position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
   transition: filter 0.35s ease, opacity 0.35s ease;
-  width: min(var(--plane-width), max(110px, calc((100vw - 930px) / 2 + 24px)));
+  width: var(--plane-width);
 }
-.hero-plane-left { left: 8px; }
-.hero-plane-right { right: 8px; }
-.hero-plane-presenting { --plane-width: clamp(220px, 18vw, 290px); }
-.hero-plane-premium { --plane-width: clamp(185px, 15vw, 245px); }
-.hero-plane-medium { --plane-width: clamp(155px, 12vw, 205px); }
-.hero-plane-small { --plane-width: clamp(130px, 10vw, 170px); }
-.hero-plane:nth-child(1) { top: 18%; }
-.hero-plane:nth-child(2) { top: 10%; }
-.hero-plane:nth-child(3) { top: 34%; }
-.hero-plane:nth-child(4) { top: 30%; }
-.hero-plane:nth-child(5) { left: 2.2vw; top: 51%; }
-.hero-plane:nth-child(6) { right: 2.2vw; top: 48%; }
-.hero-plane:nth-child(7) { left: 3.6vw; top: 67%; }
-.hero-plane:nth-child(8) { right: 3.6vw; top: 65%; }
-.hero-plane:nth-child(9) { left: 2vw; top: 82%; }
-.hero-plane:nth-child(10) { right: 2vw; top: 82%; }
-.hero-plane[data-branded="true"] { opacity: 0.94; }
+.hero-plane-card-1 { --plane-width: clamp(230px, 20vw, 320px); top: 58%; }
+.hero-plane-card-2 { --plane-width: clamp(205px, 17vw, 275px); left: 35%; top: 72%; }
+.hero-plane-card-3 { --plane-width: clamp(185px, 15vw, 245px); left: 65%; top: 72%; }
 .hero-plane[data-active="true"] { filter: drop-shadow(0 0 13px rgba(200, 255, 37, 0.82)); opacity: 1; }
-.hero-plane-flight { transform-origin: center; }
+.hero-plane-flight { transform-origin: center; width: 100%; }
 .sponsor-plane {
   display: block;
   filter: drop-shadow(0 10px 9px rgba(17, 17, 15, 0.24));
@@ -207,7 +206,7 @@ h1 em, h2 em {
   margin: 0;
   position: absolute;
   text-transform: uppercase;
-  z-index: 2;
+  z-index: 5;
 }
 .pass-stage-note svg { color: var(--acid); }
 
@@ -332,6 +331,99 @@ h1 em, h2 em {
 .ticker div { align-items: center; animation: ticker 23s linear infinite; display: flex; font-size: 11px; font-weight: 900; gap: 24px; white-space: nowrap; width: max-content; }
 .ticker svg { height: 16px; transform: rotate(9deg); width: 16px; }
 @keyframes ticker { to { transform: translateX(-50%); } }
+
+.auction-section {
+  background: #f7f7f8;
+  border-bottom: 1px solid var(--line);
+  padding: 118px 30px 124px;
+}
+.auction-shell { margin: 0 auto; max-width: 1060px; }
+.auction-head { max-width: 700px; }
+.auction-head .eyebrow { color: var(--muted); margin-bottom: 25px; }
+.auction-head h2 {
+  font-size: clamp(56px, 6.5vw, 96px);
+  letter-spacing: -0.078em;
+  line-height: 0.88;
+  margin: 0 0 25px;
+}
+.auction-head > p:not(.eyebrow) { color: var(--muted); font-size: 17px; margin: 0 0 10px; }
+.auction-head small { color: var(--muted); display: block; font-size: 12px; line-height: 1.5; }
+.auction-tabs {
+  background: #e7e7e9;
+  border-radius: 999px;
+  display: flex;
+  margin: 42px 0 24px;
+  padding: 3px;
+  width: max-content;
+}
+.auction-tabs button, .auction-sort button {
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 10px 18px;
+}
+.auction-tabs button[aria-selected="true"], .auction-sort button[aria-pressed="true"] {
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(17, 17, 15, 0.2);
+}
+.auction-controls { align-items: center; display: flex; gap: 14px; margin-bottom: 28px; }
+.auction-controls label { min-width: 285px; }
+.auction-controls select {
+  appearance: none;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2311110f' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 14px center;
+  border: 1px solid rgba(17, 17, 15, 0.22);
+  border-radius: 999px;
+  font-size: 11px;
+  outline: 0;
+  padding: 11px 42px 11px 17px;
+  width: 100%;
+}
+.auction-controls select:focus-visible { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(200, 255, 37, 0.7); }
+.auction-sort { background: #e7e7e9; border-radius: 999px; display: flex; padding: 3px; }
+.auction-list { border-top: 1px solid rgba(17, 17, 15, 0.14); }
+.auction-row {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgba(17, 17, 15, 0.14);
+  cursor: pointer;
+  display: grid;
+  gap: 15px;
+  grid-template-columns: 42px minmax(0, 1fr) 105px 92px 20px;
+  padding: 14px 9px;
+  text-align: left;
+  transition: background 0.18s ease, padding 0.18s ease;
+  width: 100%;
+}
+.auction-row:hover, .auction-row:focus-visible { background: rgba(200, 255, 37, 0.2); outline: 0; padding-left: 14px; padding-right: 14px; }
+.auction-mark {
+  align-items: center;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  border: 1px solid rgba(17, 17, 15, 0.22);
+  border-radius: 8px;
+  display: flex;
+  font-family: "Courier New", monospace;
+  font-size: 9px;
+  font-weight: 900;
+  height: 32px;
+  justify-content: center;
+  overflow: hidden;
+  width: 32px;
+}
+.auction-row-copy { align-items: baseline; display: flex; gap: 4px; min-width: 0; }
+.auction-row-copy strong { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.auction-row-copy small { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.auction-amount { font-size: 13px; justify-self: end; }
+.auction-row-state { color: var(--muted); font-family: "Courier New", monospace; font-size: 9px; justify-self: end; text-transform: uppercase; }
+.auction-row > svg { height: 14px; justify-self: end; transition: transform 0.18s ease; width: 14px; }
+.auction-row:hover > svg { transform: translate(2px, 2px); }
+.auction-empty { align-items: flex-start; border-bottom: 1px solid rgba(17, 17, 15, 0.14); display: flex; flex-direction: column; gap: 7px; padding: 42px 9px; }
+.auction-empty strong { font-size: 17px; letter-spacing: -0.03em; }
+.auction-empty span { color: var(--muted); font-size: 12px; }
 
 .funding-section, .inventory-section, .faq-section { padding: 120px 30px; }
 .section-kicker { align-items: center; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 54px auto; padding-bottom: 16px; }
@@ -539,7 +631,6 @@ main > footer div a:not(.wordmark) { align-items: center; display: flex; font-si
   .nav-links { display: none; }
   .hero-copy { padding-top: 24px; }
   .hero-subcopy { white-space: normal; }
-  .hero-fleet { display: none; }
   .funding-intro { grid-template-columns: 120px 1fr; }
   .funding-intro > p:last-child { grid-column: 2; max-width: 550px; }
   .inventory-labels, .inventory-row { grid-template-columns: 58px minmax(280px, 1fr) 95px 95px 75px 25px; }
@@ -585,6 +676,23 @@ main > footer div a:not(.wordmark) { align-items: center; display: flex; font-si
   .pass-slot-meta, .pass-slot-foot { font-size: 5px; }
   .pass-footer { font-size: 4px; padding: 8px; }
   .pass-footer strong { font-size: 4px; }
+  .hero-plane-card-1 { --plane-width: clamp(180px, 48vw, 220px); }
+  .hero-plane-card-2 { --plane-width: clamp(155px, 42vw, 195px); }
+  .hero-plane-card-3 { --plane-width: clamp(145px, 39vw, 180px); }
+  .auction-section { padding: 80px 18px 86px; }
+  .auction-head h2 { font-size: 16vw; margin-bottom: 22px; }
+  .auction-head > p:not(.eyebrow) { font-size: 15px; }
+  .auction-tabs { margin-top: 34px; }
+  .auction-controls { align-items: stretch; flex-direction: column; }
+  .auction-controls label { min-width: 0; }
+  .auction-sort { align-self: flex-start; }
+  .auction-row { gap: 10px; grid-template-columns: 34px minmax(0, 1fr) 66px 16px; padding: 13px 4px; }
+  .auction-mark { border-radius: 7px; height: 28px; width: 28px; }
+  .auction-row-copy { align-items: flex-start; flex-direction: column; gap: 2px; }
+  .auction-row-copy strong { font-size: 12px; max-width: 100%; }
+  .auction-row-copy small { font-size: 9px; max-width: 100%; }
+  .auction-row-state { display: none; }
+  .auction-amount { font-size: 12px; }
   .funding-section, .inventory-section, .benefits-section, .faq-section, .safety-section { padding: 80px 18px; }
   .funding-intro, .benefits-head, .inventory-head { display: block; padding: 55px 0; }
   .funding-intro h2, .benefits-head h2, .inventory-head h2, .proof-copy h2, .safety-section h2, .faq-section > h2 { font-size: 16vw; margin: 38px 0; }
@@ -631,6 +739,6 @@ main > footer div a:not(.wordmark) { align-items: center; display: flex; font-si
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-plane-flight { transform: none !important; }
+  .hero-fleet { display: none; }
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
 }

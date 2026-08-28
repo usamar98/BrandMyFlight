@@ -19,11 +19,12 @@ import {
   Video,
   X,
 } from "lucide-react";
-import { type CSSProperties, FormEvent, useCallback, useEffect, useState, useTransition } from "react";
+import { type CSSProperties, FormEvent, useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { createCheckout } from "@/app/actions/create-checkout";
+import { AuctionSection } from "@/components/auction-section";
 import { BrandLogo } from "@/components/brand-logo";
 import { SmoothScroll } from "@/components/smooth-scroll";
-import type { PlacementSlug, PlacementWithState } from "@/lib/placements";
+import type { AuctionBid, PlacementSlug, PlacementWithState } from "@/lib/placements";
 
 type ProjectPreview = {
   url: string;
@@ -40,17 +41,10 @@ type VisitorCounts = {
 
 type SponsorPreviews = Partial<Record<PlacementSlug, ProjectPreview>>;
 
-const fleetLayout = [
-  { side: "left", motion: 8, duration: 8.5 },
-  { side: "right", motion: 7, duration: 9.2 },
-  { side: "left", motion: 6, duration: 8.8 },
-  { side: "right", motion: 6, duration: 9.8 },
-  { side: "left", motion: 5, duration: 8.2 },
-  { side: "right", motion: 5, duration: 9.4 },
-  { side: "left", motion: 4, duration: 7.8 },
-  { side: "right", motion: 4, duration: 8.7 },
-  { side: "left", motion: 3, duration: 9.1 },
-  { side: "right", motion: 3, duration: 8.4 },
+const ticketFlightPaths = [
+  { duration: 13.5, delay: 0 },
+  { duration: 14.5, delay: 3.2 },
+  { duration: 15.5, delay: 6.4 },
 ] as const;
 
 const benefits = [
@@ -69,7 +63,13 @@ const proofSteps = [
   { number: "04", label: "After landing", title: "Proof, video, recap", copy: "A public recap documents that the flight happened and shows every delivered placement." },
 ];
 
-export function SponsorSite({ placements }: { placements: PlacementWithState[] }) {
+export function SponsorSite({
+  placements,
+  auctionHistory,
+}: {
+  placements: PlacementWithState[];
+  auctionHistory: AuctionBid[];
+}) {
   const [selectedSlug, setSelectedSlug] = useState<PlacementSlug | null>(null);
   const [sponsorPreviews, setSponsorPreviews] = useState<SponsorPreviews>({});
   const [visitorCounts, setVisitorCounts] = useState<VisitorCounts>({ liveVisitors: 1, totalVisitors: 1 });
@@ -137,6 +137,7 @@ export function SponsorSite({ placements }: { placements: PlacementWithState[] }
         </a>
         <div className="nav-links">
           <a href="#sponsor-pass">Sponsor Pass</a>
+          <a href="#auction">Auction</a>
           <a href="#benefits">What you get</a>
           <a href="#inventory">Positions</a>
           <a href="#proof">Proof plan</a>
@@ -147,11 +148,6 @@ export function SponsorSite({ placements }: { placements: PlacementWithState[] }
       </nav>
 
       <section className="flight-hero">
-        <HeroFleet
-          placements={placements}
-          previews={sponsorPreviews}
-          selectedSlug={selectedSlug}
-        />
         <div className="hero-copy">
           <motion.p className="eyebrow hero-visitors" aria-live="polite" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
             <span><b>{visitorCounts.liveVisitors.toLocaleString()}</b> {visitorCounts.liveVisitors === 1 ? "person" : "people"} visiting this site now</span>
@@ -178,6 +174,11 @@ export function SponsorSite({ placements }: { placements: PlacementWithState[] }
           transition={{ duration: 0.9, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
         >
           <SponsorPass placements={placements} previews={sponsorPreviews} onSelect={setSelectedSlug} />
+          <HeroFleet
+            placements={placements}
+            previews={sponsorPreviews}
+            selectedSlug={selectedSlug}
+          />
           <p className="pass-stage-note"><Sparkles size={13} /> Tap any spot to claim or outbid it</p>
         </motion.div>
       </section>
@@ -188,6 +189,8 @@ export function SponsorSite({ placements }: { placements: PlacementWithState[] }
           BRAND THE JOURNEY <Plane /> LHE → JFK <Plane /> TEN FOUNDERS <Plane /> ONE FLIGHT <Plane />
         </div>
       </section>
+
+      <AuctionSection placements={placements} history={auctionHistory} onSelect={setSelectedSlug} />
 
       <section className="funding-section" id="funding">
         <div className="section-kicker"><span>01</span><p>The funding model</p></div>
@@ -344,10 +347,57 @@ function HeroFleet({
   previews: SponsorPreviews;
   selectedSlug: PlacementSlug | null;
 }) {
+  const fleetRef = useRef<HTMLDivElement>(null);
+  const [anchors, setAnchors] = useState<Partial<Record<PlacementSlug, { left: number; top: number }>>>({});
+
+  useEffect(() => {
+    const fleet = fleetRef.current;
+    const stage = fleet?.parentElement;
+    if (!fleet || !stage) return;
+
+    const updateAnchors = () => {
+      const stageRect = stage.getBoundingClientRect();
+      const next: Partial<Record<PlacementSlug, { left: number; top: number }>> = {};
+
+      placements.slice(0, 3).forEach((placement) => {
+        const slot = stage.querySelector<HTMLElement>(`.pass-slot[data-placement="${placement.slug}"]`);
+        if (!slot) return;
+        const slotRect = slot.getBoundingClientRect();
+        next[placement.slug] = {
+          left: slotRect.left - stageRect.left + slotRect.width / 2,
+          top: slotRect.top - stageRect.top + slotRect.height / 2,
+        };
+      });
+
+      setAnchors((current) => {
+        const unchanged = placements.slice(0, 3).every((placement) => {
+          const before = current[placement.slug];
+          const after = next[placement.slug];
+          return before && after
+            ? Math.abs(before.left - after.left) < 0.5 && Math.abs(before.top - after.top) < 0.5
+            : before === after;
+        });
+        return unchanged ? current : next;
+      });
+    };
+
+    updateAnchors();
+    const resizeObserver = new ResizeObserver(updateAnchors);
+    resizeObserver.observe(stage);
+    stage.querySelectorAll(".pass-slot").forEach((slot) => resizeObserver.observe(slot));
+    window.addEventListener("resize", updateAnchors);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", updateAnchors);
+    };
+  }, [placements]);
+
   return (
-    <div className="hero-fleet" aria-hidden="true">
-      {placements.map((placement, index) => {
-        const layout = fleetLayout[index];
+    <div className="hero-fleet" aria-hidden="true" ref={fleetRef}>
+      {placements.slice(0, 3).map((placement, index) => {
+        const path = ticketFlightPaths[index];
+        const anchor = anchors[placement.slug];
         const preview = previews[placement.slug];
         const brandName = preview?.name ?? placement.sponsor?.projectName ?? "YOUR BRAND";
         const faviconUrl = preview?.faviconUrl ?? placement.sponsor?.faviconUrl ?? null;
@@ -355,27 +405,30 @@ function HeroFleet({
         const brandColor = preview?.brandColor ?? placement.sponsor?.brandColor ?? "#f3f0e7";
         const xHandle = placement.sponsor?.xHandle ?? null;
         const isBranded = Boolean(preview || placement.sponsor);
-        const horizontalMotion = layout.side === "left" ? layout.motion : -layout.motion;
 
         return (
           <div
-            className={`hero-plane hero-plane-${layout.side} hero-plane-${placement.tier}`}
+            className={`hero-plane hero-plane-card-${index + 1}`}
             data-active={selectedSlug === placement.slug}
             data-branded={isBranded}
             key={placement.slug}
+            style={anchor ? { left: anchor.left, top: anchor.top } : undefined}
           >
             <motion.div
               className="hero-plane-flight"
               animate={{
-                x: [0, horizontalMotion, -horizontalMotion * 0.45, 0],
-                y: [0, -layout.motion, layout.motion * 0.5, 0],
-                rotate: [0, layout.side === "left" ? 1.8 : -1.8, 0],
+                x: ["72vw", "0vw", "-54vw", "-76vw"],
+                y: [-38, 0, 20, 32],
+                rotate: [-139, -135, -133, -132],
+                opacity: [0, 0.98, 0.9, 0],
               }}
               transition={{
-                duration: layout.duration,
-                delay: index * 0.17,
-                ease: "easeInOut",
+                duration: path.duration,
+                delay: path.delay,
+                ease: "linear",
                 repeat: Infinity,
+                repeatDelay: 1.25,
+                times: [0, 0.48, 0.9, 1],
               }}
             >
               <SponsorPlane
@@ -521,6 +574,7 @@ function SponsorPass({
             <button
               type="button"
               className={`pass-slot pass-slot-${placement.tier}`}
+              data-placement={placement.slug}
               data-status={placement.status}
               key={placement.slug}
               onClick={() => onSelect(placement.slug)}

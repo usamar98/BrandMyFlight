@@ -141,6 +141,18 @@ export type PlacementWithState = Placement & {
   hasPendingBid: boolean;
 };
 
+export type AuctionBid = {
+  id: string;
+  placementSlug: PlacementSlug;
+  placementName: string;
+  tier: Placement["tier"];
+  projectName: string;
+  faviconUrl: string | null;
+  brandColor: string;
+  amount: number;
+  timeLabel: string;
+};
+
 export function getNextBidAmountCents(currentAmountCents: number) {
   return currentAmountCents + 500;
 }
