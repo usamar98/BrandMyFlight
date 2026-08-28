@@ -19,7 +19,7 @@ import {
   Video,
   X,
 } from "lucide-react";
-import { FormEvent, useEffect, useState, useTransition } from "react";
+import { FormEvent, useCallback, useEffect, useState, useTransition } from "react";
 import { createCheckout } from "@/app/actions/create-checkout";
 import { BrandLogo } from "@/components/brand-logo";
 import { SmoothScroll } from "@/components/smooth-scroll";
@@ -36,6 +36,21 @@ type VisitorCounts = {
   liveVisitors: number;
   totalVisitors: number;
 };
+
+type SponsorPreviews = Partial<Record<PlacementSlug, ProjectPreview>>;
+
+const fleetLayout = [
+  { side: "left", motion: 8, duration: 8.5 },
+  { side: "right", motion: 7, duration: 9.2 },
+  { side: "left", motion: 6, duration: 8.8 },
+  { side: "right", motion: 6, duration: 9.8 },
+  { side: "left", motion: 5, duration: 8.2 },
+  { side: "right", motion: 5, duration: 9.4 },
+  { side: "left", motion: 4, duration: 7.8 },
+  { side: "right", motion: 4, duration: 8.7 },
+  { side: "left", motion: 3, duration: 9.1 },
+  { side: "right", motion: 3, duration: 8.4 },
+] as const;
 
 const benefits = [
   { icon: <Stamp />, title: "Digital Sponsor Pass", copy: "Your logo lives on the public campaign artwork and sponsor directory." },
@@ -55,12 +70,25 @@ const proofSteps = [
 
 export function SponsorSite({ placements }: { placements: PlacementWithState[] }) {
   const [selectedSlug, setSelectedSlug] = useState<PlacementSlug | null>(null);
+  const [sponsorPreviews, setSponsorPreviews] = useState<SponsorPreviews>({});
   const [visitorCounts, setVisitorCounts] = useState<VisitorCounts>({ liveVisitors: 1, totalVisitors: 1 });
   const selectedPlacement = placements.find((placement) => placement.slug === selectedSlug) ?? null;
   const availableCount = placements.filter((placement) => placement.status === "available").length;
   const fundedTotal = placements
     .filter((placement) => placement.status === "sold")
     .reduce((total, placement) => total + placement.price, 0);
+
+  const handlePreviewChange = useCallback((slug: PlacementSlug, preview: ProjectPreview | null) => {
+    setSponsorPreviews((current) => {
+      if (preview) return { ...current, [slug]: preview };
+
+      const next = { ...current };
+      delete next[slug];
+      return next;
+    });
+  }, []);
+
+  const handleDrawerClose = useCallback(() => setSelectedSlug(null), []);
 
   useEffect(() => {
     let mounted = true;
@@ -118,6 +146,11 @@ export function SponsorSite({ placements }: { placements: PlacementWithState[] }
       </nav>
 
       <section className="flight-hero">
+        <HeroFleet
+          placements={placements}
+          previews={sponsorPreviews}
+          selectedSlug={selectedSlug}
+        />
         <div className="hero-copy">
           <motion.p className="eyebrow hero-visitors" aria-live="polite" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
             <span><b>{visitorCounts.liveVisitors.toLocaleString()}</b> {visitorCounts.liveVisitors === 1 ? "person" : "people"} visiting this site now</span>
@@ -143,7 +176,7 @@ export function SponsorSite({ placements }: { placements: PlacementWithState[] }
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
         >
-          <SponsorPass placements={placements} onSelect={setSelectedSlug} />
+          <SponsorPass placements={placements} previews={sponsorPreviews} onSelect={setSelectedSlug} />
           <p className="pass-stage-note"><Sparkles size={13} /> Tap any spot to claim it</p>
         </motion.div>
       </section>
@@ -286,13 +319,124 @@ export function SponsorSite({ placements }: { placements: PlacementWithState[] }
       </footer>
 
       <AnimatePresence>
-        {selectedPlacement ? <SponsorDrawer placement={selectedPlacement} onClose={() => setSelectedSlug(null)} /> : null}
+        {selectedPlacement ? (
+          <SponsorDrawer
+            key={selectedPlacement.slug}
+            placement={selectedPlacement}
+            initialPreview={sponsorPreviews[selectedPlacement.slug] ?? null}
+            onPreviewChange={handlePreviewChange}
+            onClose={handleDrawerClose}
+          />
+        ) : null}
       </AnimatePresence>
     </main>
   );
 }
 
-function SponsorPass({ placements, onSelect }: { placements: PlacementWithState[]; onSelect: (slug: PlacementSlug) => void }) {
+function HeroFleet({
+  placements,
+  previews,
+  selectedSlug,
+}: {
+  placements: PlacementWithState[];
+  previews: SponsorPreviews;
+  selectedSlug: PlacementSlug | null;
+}) {
+  return (
+    <div className="hero-fleet" aria-hidden="true">
+      {placements.map((placement, index) => {
+        const layout = fleetLayout[index];
+        const preview = previews[placement.slug];
+        const brandName = preview?.name ?? placement.sponsor?.projectName ?? "YOUR BRAND";
+        const faviconUrl = preview?.faviconUrl ?? placement.sponsor?.faviconUrl ?? null;
+        const isBranded = Boolean(preview || placement.sponsor);
+        const horizontalMotion = layout.side === "left" ? layout.motion : -layout.motion;
+
+        return (
+          <div
+            className={`hero-plane hero-plane-${layout.side} hero-plane-${placement.tier}`}
+            data-active={selectedSlug === placement.slug}
+            data-branded={isBranded}
+            key={placement.slug}
+          >
+            <motion.div
+              className="hero-plane-flight"
+              animate={{
+                x: [0, horizontalMotion, -horizontalMotion * 0.45, 0],
+                y: [0, -layout.motion, layout.motion * 0.5, 0],
+                rotate: [0, layout.side === "left" ? 1.8 : -1.8, 0],
+              }}
+              transition={{
+                duration: layout.duration,
+                delay: index * 0.17,
+                ease: "easeInOut",
+                repeat: Infinity,
+              }}
+            >
+              <SponsorPlane
+                brandName={brandName}
+                faviconUrl={faviconUrl}
+                number={placement.number}
+                side={layout.side}
+              />
+            </motion.div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function SponsorPlane({
+  brandName,
+  faviconUrl,
+  number,
+  side,
+}: {
+  brandName: string;
+  faviconUrl: string | null;
+  number: string;
+  side: "left" | "right";
+}) {
+  const planeTransform = side === "right" ? "translate(260 0) scale(-1 1)" : undefined;
+  const shortName = brandName.toUpperCase().slice(0, 18);
+
+  return (
+    <svg className="sponsor-plane" viewBox="0 0 260 110" focusable="false">
+      <ellipse className="plane-shadow" cx="130" cy="92" rx="86" ry="8" />
+      <g transform={planeTransform}>
+        <path className="plane-tail-wing" d="M63 43 31 20h20l42 24Zm30 23L51 90H31l32-24Z" />
+        <path className="plane-main-wing" d="m151 43-66-38h29l79 39Zm42 23-79 39H85l66-39Z" />
+        <path className="plane-fuselage" d="M17 43h188c20 0 38 5 50 12-12 7-30 12-50 12H17C9 67 4 62 4 55s5-12 13-12Z" />
+        <path className="plane-cabin" d="M188 47h22c14 0 27 3 36 8-9 5-22 8-36 8h-22Z" />
+        <path className="plane-stripe" d="M25 55h157" />
+        <circle className="plane-engine" cx="132" cy="31" r="9" />
+        <circle className="plane-engine" cx="132" cy="79" r="9" />
+      </g>
+      <g className="plane-livery">
+        <rect className="plane-logo-panel" x="99" y="16" width="48" height="31" rx="4" />
+        {faviconUrl ? (
+          <image href={faviconUrl} x="106" y="20" width="34" height="23" preserveAspectRatio="xMidYMid meet" />
+        ) : (
+          <text className="plane-logo-placeholder" x="123" y="36" textAnchor="middle">+</text>
+        )}
+        <text className="plane-brand-name" x="102" y="60" textAnchor="middle">{shortName}</text>
+        <text className="plane-position-number" x="48" y="60" textAnchor="middle">#{number}</text>
+        <text className="plane-wing-label" x="122" y="92" textAnchor="middle">SPONSOR PASS</text>
+      </g>
+    </svg>
+  );
+}
+
+function SponsorPass({
+  placements,
+  previews,
+  onSelect,
+}: {
+  placements: PlacementWithState[];
+  previews: SponsorPreviews;
+  onSelect: (slug: PlacementSlug) => void;
+}) {
   return (
     <article className="sponsor-pass" id="sponsor-pass" aria-label="Interactive fictional Indie Air Sponsor Pass">
       <header className="pass-header">
@@ -313,7 +457,9 @@ function SponsorPass({ placements, onSelect }: { placements: PlacementWithState[
       </dl>
       <div className="pass-sponsors">
         {placements.map((placement) => {
-          const sponsorName = placement.sponsor?.projectName;
+          const preview = previews[placement.slug];
+          const sponsorName = preview?.name ?? placement.sponsor?.projectName;
+          const faviconUrl = preview?.faviconUrl ?? placement.sponsor?.faviconUrl;
           return (
             <button
               type="button"
@@ -327,9 +473,9 @@ function SponsorPass({ placements, onSelect }: { placements: PlacementWithState[
               <div className="pass-brand">
                 <span
                   className="pass-brand-mark"
-                  style={placement.sponsor?.faviconUrl ? { backgroundImage: `url(${placement.sponsor.faviconUrl})` } : undefined}
+                  style={faviconUrl ? { backgroundImage: `url(${faviconUrl})` } : undefined}
                 >
-                  {placement.sponsor?.faviconUrl ? null : sponsorName?.slice(0, 1) ?? "+"}
+                  {faviconUrl ? null : sponsorName?.slice(0, 1) ?? "+"}
                 </span>
                 <strong>{sponsorName ?? "YOUR BRAND"}</strong>
               </div>
@@ -355,10 +501,20 @@ function Faq({ question, answer }: { question: string; answer: string }) {
   return <details><summary><span>{question}</span><i><ChevronDown /></i></summary><p>{answer}</p></details>;
 }
 
-function SponsorDrawer({ placement, onClose }: { placement: PlacementWithState; onClose: () => void }) {
-  const [startupUrl, setStartupUrl] = useState("");
+function SponsorDrawer({
+  placement,
+  initialPreview,
+  onPreviewChange,
+  onClose,
+}: {
+  placement: PlacementWithState;
+  initialPreview: ProjectPreview | null;
+  onPreviewChange: (slug: PlacementSlug, preview: ProjectPreview | null) => void;
+  onClose: () => void;
+}) {
+  const [startupUrl, setStartupUrl] = useState(initialPreview?.url ?? "");
   const [xHandle, setXHandle] = useState("");
-  const [preview, setPreview] = useState<ProjectPreview | null>(null);
+  const [preview, setPreview] = useState<ProjectPreview | null>(initialPreview);
   const [previewError, setPreviewError] = useState("");
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
@@ -392,9 +548,11 @@ function SponsorDrawer({ placement, onClose }: { placement: PlacementWithState; 
         const data = await response.json();
         if (!response.ok) throw new Error(data.error ?? "Unable to read that website.");
         setPreview(data);
+        onPreviewChange(placement.slug, data);
       } catch (error) {
         if (controller.signal.aborted) return;
         setPreview(null);
+        onPreviewChange(placement.slug, null);
         setPreviewError(error instanceof Error ? error.message : "Unable to read that website.");
       } finally {
         if (!controller.signal.aborted) setIsPreviewing(false);
@@ -404,7 +562,7 @@ function SponsorDrawer({ placement, onClose }: { placement: PlacementWithState; 
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [startupUrl]);
+  }, [onPreviewChange, placement.slug, startupUrl]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -461,6 +619,7 @@ function SponsorDrawer({ placement, onClose }: { placement: PlacementWithState; 
                   setStartupUrl(value);
                   if (value.trim().length < 4) {
                     setPreview(null);
+                    onPreviewChange(placement.slug, null);
                     setPreviewError("");
                     setIsPreviewing(false);
                   }

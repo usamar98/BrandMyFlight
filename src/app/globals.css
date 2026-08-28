@@ -73,14 +73,19 @@ svg { flex: 0 0 auto; }
 .nav-cta:hover { background: var(--acid); color: var(--ink); }
 
 .flight-hero {
+  isolation: isolate;
   min-height: auto;
+  overflow: hidden;
+  position: relative;
 }
 .hero-copy {
   align-items: center;
   display: flex;
   flex-direction: column;
   padding: clamp(18px, 2.4vw, 34px) 30px 16px;
+  position: relative;
   text-align: center;
+  z-index: 2;
 }
 .hero-copy h1 {
   font-size: clamp(40px, 4.8vw, 72px);
@@ -106,14 +111,61 @@ h1 em, h2 em {
 .hero-progress span { color: var(--paper); font-family: "Courier New", monospace; font-size: 9px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; }
 .hero-progress i { background: var(--acid); border-radius: 50%; height: 5px; margin: 0 1px; width: 5px; }
 
+.hero-fleet {
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  position: absolute;
+  z-index: 0;
+}
+.hero-plane {
+  opacity: 0.72;
+  position: absolute;
+  transition: filter 0.35s ease, opacity 0.35s ease;
+  width: min(var(--plane-width), max(80px, calc((100vw - 960px) / 2 - 14px)));
+}
+.hero-plane-left { left: 8px; }
+.hero-plane-right { right: 8px; }
+.hero-plane-presenting { --plane-width: clamp(150px, 14vw, 220px); }
+.hero-plane-premium { --plane-width: clamp(110px, 9.8vw, 165px); }
+.hero-plane-medium { --plane-width: clamp(90px, 8vw, 135px); }
+.hero-plane-small { --plane-width: clamp(68px, 6.3vw, 105px); }
+.hero-plane:nth-child(1) { top: 18%; }
+.hero-plane:nth-child(2) { top: 10%; }
+.hero-plane:nth-child(3) { top: 34%; }
+.hero-plane:nth-child(4) { top: 30%; }
+.hero-plane:nth-child(5) { left: 2.2vw; top: 51%; }
+.hero-plane:nth-child(6) { right: 2.2vw; top: 48%; }
+.hero-plane:nth-child(7) { left: 3.6vw; top: 67%; }
+.hero-plane:nth-child(8) { right: 3.6vw; top: 65%; }
+.hero-plane:nth-child(9) { left: 2vw; top: 82%; }
+.hero-plane:nth-child(10) { right: 2vw; top: 82%; }
+.hero-plane[data-branded="true"] { opacity: 0.94; }
+.hero-plane[data-active="true"] { filter: drop-shadow(0 0 13px rgba(200, 255, 37, 0.82)); opacity: 1; }
+.hero-plane-flight { transform-origin: center; }
+.sponsor-plane { display: block; height: auto; overflow: visible; width: 100%; }
+.plane-shadow { fill: rgba(17, 17, 15, 0.14); filter: blur(3px); }
+.plane-tail-wing { fill: var(--paper); stroke: var(--ink); stroke-linejoin: round; stroke-width: 2; }
+.plane-main-wing { fill: var(--acid); stroke: var(--ink); stroke-linejoin: round; stroke-width: 2; }
+.plane-fuselage { fill: var(--ink); stroke: var(--ink); stroke-width: 2; }
+.plane-cabin { fill: var(--paper-deep); stroke: var(--ink); stroke-width: 1.5; }
+.plane-stripe { fill: none; stroke: var(--acid); stroke-width: 3; }
+.plane-engine { fill: var(--paper); stroke: var(--ink); stroke-width: 2; }
+.plane-logo-panel { fill: var(--paper); stroke: var(--ink); stroke-width: 1.5; }
+.plane-logo-placeholder { fill: var(--ink); font-family: Arial, sans-serif; font-size: 23px; font-weight: 900; }
+.plane-brand-name { fill: var(--paper); font-family: Arial, sans-serif; font-size: 8px; font-weight: 900; letter-spacing: 0.03em; }
+.plane-position-number { fill: var(--acid); font-family: "Courier New", monospace; font-size: 10px; font-weight: 900; }
+.plane-wing-label { fill: var(--ink); font-family: "Courier New", monospace; font-size: 7px; font-weight: 900; letter-spacing: 0.08em; }
+
 .pass-stage {
   align-items: center;
-  background: var(--paper);
+  background: transparent;
   display: flex;
   justify-content: center;
   overflow: visible;
   padding: 0 30px 58px;
   position: relative;
+  z-index: 2;
 }
 .pass-stage::before {
   content: none;
@@ -445,6 +497,7 @@ main > footer div a:not(.wordmark) { align-items: center; display: flex; font-si
   .nav-links { display: none; }
   .hero-copy { padding-top: 24px; }
   .hero-subcopy { white-space: normal; }
+  .hero-fleet { display: none; }
   .funding-intro { grid-template-columns: 120px 1fr; }
   .funding-intro > p:last-child { grid-column: 2; max-width: 550px; }
   .inventory-labels, .inventory-row { grid-template-columns: 58px minmax(280px, 1fr) 95px 95px 75px 25px; }
@@ -534,5 +587,6 @@ main > footer div a:not(.wordmark) { align-items: center; display: flex; font-si
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .hero-plane-flight { transform: none !important; }
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
 }
