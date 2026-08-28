@@ -19,7 +19,7 @@ import {
   Video,
   X,
 } from "lucide-react";
-import { FormEvent, useCallback, useEffect, useId, useState, useTransition } from "react";
+import { type CSSProperties, FormEvent, useCallback, useEffect, useState, useTransition } from "react";
 import { createCheckout } from "@/app/actions/create-checkout";
 import { BrandLogo } from "@/components/brand-logo";
 import { SmoothScroll } from "@/components/smooth-scroll";
@@ -30,6 +30,7 @@ type ProjectPreview = {
   name: string;
   tagline: string;
   faviconUrl: string | null;
+  brandColor: string;
 };
 
 type VisitorCounts = {
@@ -76,7 +77,7 @@ export function SponsorSite({ placements }: { placements: PlacementWithState[] }
   const availableCount = placements.filter((placement) => placement.status === "available").length;
   const fundedTotal = placements
     .filter((placement) => placement.status === "sold")
-    .reduce((total, placement) => total + placement.price, 0);
+    .reduce((total, placement) => total + (placement.currentBid ?? placement.price), 0);
 
   const handlePreviewChange = useCallback((slug: PlacementSlug, preview: ProjectPreview | null) => {
     setSponsorPreviews((current) => {
@@ -166,7 +167,7 @@ export function SponsorSite({ placements }: { placements: PlacementWithState[] }
           <div className="hero-progress" aria-label="Campaign summary">
             <strong>${fundedTotal.toLocaleString()} funded</strong>
             <i aria-hidden="true" />
-            <span>{availableCount} of 10 spots available</span>
+            <span>{availableCount} unclaimed · all 10 open to bids</span>
           </div>
         </div>
 
@@ -177,7 +178,7 @@ export function SponsorSite({ placements }: { placements: PlacementWithState[] }
           transition={{ duration: 0.9, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
         >
           <SponsorPass placements={placements} previews={sponsorPreviews} onSelect={setSelectedSlug} />
-          <p className="pass-stage-note"><Sparkles size={13} /> Tap any spot to claim it</p>
+          <p className="pass-stage-note"><Sparkles size={13} /> Tap any spot to claim or outbid it</p>
         </motion.div>
       </section>
 
@@ -193,14 +194,14 @@ export function SponsorSite({ placements }: { placements: PlacementWithState[] }
         <div className="funding-intro">
           <p className="eyebrow">Transparent by design</p>
           <h2>A $750 flight,<br /><em>split ten ways.</em></h2>
-          <p>One presenting partner leads the campaign. Nine more brands join at clear, fixed prices—no bidding, hidden fees, or fake scarcity.</p>
+          <p>Every position starts at a clear price. Once claimed, another builder can outbid by 20%; the previous paid sponsor is automatically refunded.</p>
         </div>
         <div className="funding-grid">
           <FundingCard quantity="01" tier="Presenting" unit="$250" total="$250" className="funding-presenting" />
           <FundingCard quantity="02" tier="Premium" unit="$120 ea." total="$240" />
           <FundingCard quantity="03" tier="Medium" unit="$60 ea." total="$180" />
           <FundingCard quantity="04" tier="Small" unit="$20 ea." total="$80" />
-          <div className="funding-total"><span>Possible total</span><strong>$750</strong><small>10 / 10 positions</small></div>
+          <div className="funding-total"><span>Starting total</span><strong>$750</strong><small>10 / 10 positions · outbids open</small></div>
         </div>
       </section>
 
@@ -231,7 +232,7 @@ export function SponsorSite({ placements }: { placements: PlacementWithState[] }
         <div className="section-kicker"><span>03</span><p>Live position inventory</p></div>
         <div className="inventory-head">
           <div><p className="eyebrow">Choose your place on the pass</p><h2>Ten positions.<br /><em>One brand each.</em></h2></div>
-          <p>Pick a position, add your startup URL and optional X handle, then continue to Stripe. Your favicon, startup name, and tagline are fetched automatically.</p>
+          <p>Claim an open position or outbid a current sponsor, add your startup URL and optional X handle, then continue to Stripe. Your logo, brand color, name, and tagline are fetched automatically.</p>
         </div>
         <div className="inventory-list">
           <div className="inventory-labels" aria-hidden="true">
@@ -243,7 +244,7 @@ export function SponsorSite({ placements }: { placements: PlacementWithState[] }
               type="button"
               key={placement.slug}
               onClick={() => setSelectedSlug(placement.slug)}
-              aria-label={`${placement.name}, ${placement.status}, $${placement.price}`}
+              aria-label={`${placement.name}, ${placement.status}, ${placement.status === "sold" ? `outbid from $${placement.checkoutPrice}` : `$${placement.price}`}`}
             >
               <span className="inventory-number">{placement.number}</span>
               <span className="inventory-title">
@@ -251,8 +252,8 @@ export function SponsorSite({ placements }: { placements: PlacementWithState[] }
                 <small>{placement.sponsor?.tagline ?? placement.short}</small>
               </span>
               <span className="tier-pill">{placement.tier}</span>
-              <span className={`status-pill status-${placement.status}`}>{placement.status}</span>
-              <strong className="inventory-price">${placement.price}</strong>
+              <span className={`status-pill status-${placement.status}`}>{placement.status === "sold" ? "outbid open" : placement.status}</span>
+              <strong className="inventory-price">${placement.status === "sold" ? placement.checkoutPrice : placement.price}</strong>
               <ArrowDownRight size={19} />
             </button>
           ))}
@@ -294,6 +295,7 @@ export function SponsorSite({ placements }: { placements: PlacementWithState[] }
         <div className="faq-list">
           <Faq question="Is this a real boarding pass?" answer="No. It is a fictional Sponsor Pass for a promotional campaign. It cannot be used for travel and deliberately includes no barcode, booking reference, or real airline branding." />
           <Faq question="What happens after I buy a position?" answer="Stripe confirms the payment, then the email on your Stripe receipt is used to coordinate your final logo artwork and campaign delivery. No BrandMyFlight account is created." />
+          <Faq question="What happens if another brand outbids me?" answer="Every claimed position remains open to a bid at least 20% higher, rounded to the next $5. When the challenger pays successfully, your original Stripe payment is automatically refunded and the new brand takes the position." />
           <Faq question="Do all sponsors receive the same deliverables?" answer="Every sponsor receives the digital Sponsor Pass, backlink, launch placement, airport/travel photography, recap inclusion, and public proof. Larger positions receive more visual prominence; the presenting position also receives the leading campaign credit." />
           <Faq question="What if the trip changes?" answer="If practical travel details shift, sponsors receive an updated delivery schedule. If the campaign cannot be completed, the terms provide for a replacement of equal value or a refund." />
           <Faq question="Can any startup sponsor the flight?" answer="Sponsors are reviewed for fit and safety. Fraudulent, unlawful, misleading, infringing, or travel-confusing artwork can be rejected and refunded." />
@@ -349,6 +351,9 @@ function HeroFleet({
         const preview = previews[placement.slug];
         const brandName = preview?.name ?? placement.sponsor?.projectName ?? "YOUR BRAND";
         const faviconUrl = preview?.faviconUrl ?? placement.sponsor?.faviconUrl ?? null;
+        const tagline = preview?.tagline ?? placement.sponsor?.tagline ?? "Your idea deserves the window seat.";
+        const brandColor = preview?.brandColor ?? placement.sponsor?.brandColor ?? "#c8ff25";
+        const xHandle = placement.sponsor?.xHandle ?? null;
         const isBranded = Boolean(preview || placement.sponsor);
         const horizontalMotion = layout.side === "left" ? layout.motion : -layout.motion;
 
@@ -376,8 +381,10 @@ function HeroFleet({
               <SponsorPlane
                 brandName={brandName}
                 faviconUrl={faviconUrl}
+                tagline={tagline}
+                brandColor={brandColor}
+                xHandle={xHandle}
                 number={placement.number}
-                side={layout.side}
               />
             </motion.div>
           </div>
@@ -390,149 +397,88 @@ function HeroFleet({
 function SponsorPlane({
   brandName,
   faviconUrl,
+  tagline,
+  brandColor,
+  xHandle,
   number,
-  side,
 }: {
   brandName: string;
   faviconUrl: string | null;
+  tagline: string;
+  brandColor: string;
+  xHandle: string | null;
   number: string;
-  side: "left" | "right";
 }) {
-  const paintId = useId().replaceAll(":", "");
-  const bodyGradientId = `${paintId}-body`;
-  const wingGradientId = `${paintId}-wing`;
-  const metalGradientId = `${paintId}-metal`;
-  const fuselageClipId = `${paintId}-fuselage`;
-  const planeTransform = side === "right" ? "translate(360 0) scale(-1 1)" : undefined;
-  const shortName = brandName.toUpperCase().slice(0, 16);
-  const sponsorLabel = side === "left"
-    ? { x: 211, y: 108, rotation: -31 }
-    : { x: 149, y: 108, rotation: 31 };
-  const wingLogo = side === "left"
-    ? { x: 262, y: 157, rotation: 45 }
-    : { x: 98, y: 157, rotation: -45 };
-  const slotBadge = side === "left"
-    ? { x: 91, y: 159, rotation: -16 }
-    : { x: 269, y: 159, rotation: 16 };
-  const fuselagePath = "M48 164C84 157 119 141 151 121L299 27C317 15 337 14 346 21C352 29 346 41 333 50L191 145C150 172 107 186 65 188C54 188 47 181 46 173C45 168 46 166 48 164Z";
+  const shortName = brandName.toUpperCase().slice(0, 18);
+  const shortHandle = (xHandle ?? "SPONSORED BUILDER").toUpperCase().slice(0, 25);
+  const shortTagline = tagline.slice(0, 48);
+  const inkColor = getContrastColor(brandColor);
+  const wingLogos = [
+    { x: 101, y: 82, rotation: 18 },
+    { x: 258, y: 178, rotation: 18 },
+  ];
 
   return (
-    <svg className="sponsor-plane" viewBox="0 0 360 220" focusable="false">
-      <defs>
-        <linearGradient id={bodyGradientId} x1="0" x2="1" y1="0" y2="1">
-          <stop offset="0" stopColor="#fffdf4" />
-          <stop offset="0.5" stopColor="#f0ecdf" />
-          <stop offset="1" stopColor="#bdb7a9" />
-        </linearGradient>
-        <linearGradient id={wingGradientId} x1="0" x2="0.9" y1="0" y2="1">
-          <stop offset="0" stopColor="#fffdf4" />
-          <stop offset="0.72" stopColor="#d8d2c5" />
-          <stop offset="1" stopColor="#aaa497" />
-        </linearGradient>
-        <linearGradient id={metalGradientId} x1="0" x2="1">
-          <stop offset="0" stopColor="#1b1b18" />
-          <stop offset="0.48" stopColor="#f5f1e6" />
-          <stop offset="1" stopColor="#55544e" />
-        </linearGradient>
-        <clipPath id={fuselageClipId}>
-          <path d={fuselagePath} />
-        </clipPath>
-      </defs>
+    <svg
+      className="sponsor-plane"
+      viewBox="0 0 360 250"
+      focusable="false"
+      style={{ "--plane-color": brandColor, "--plane-ink": inkColor } as CSSProperties}
+    >
+      <title>{`${brandName} sponsor plane`}</title>
+      <ellipse className="plane-shadow" cx="180" cy="221" rx="128" ry="12" transform="rotate(-8 180 221)" />
 
-      <ellipse className="plane-shadow" cx="180" cy="190" rx="126" ry="14" transform="rotate(-8 180 190)" />
-      <g transform={planeTransform}>
-        <path
-          className="plane-far-wing"
-          d="M182 96L60 62L38 73L157 119L207 101Z"
-          fill={`url(#${wingGradientId})`}
-        />
-        <path className="plane-far-wing-accent" d="M61 63L38 73L158 119L171 114Z" />
-        <path className="plane-panel-line" d="M66 72L159 110M93 75L101 88M124 84L130 99M154 92L158 107" />
-        <path className="plane-far-engine" d="M99 73C104 63 115 63 123 76L118 82L103 79Z" />
-        <path className="plane-far-engine" d="M161 89C166 79 178 80 185 94L179 100L165 96Z" />
+      <path className="plane-shape plane-left-wing" d="M184 112L63 61L48 76L159 139L211 123Z" />
+      <path className="plane-shape plane-right-wing" d="M194 122L274 217Q280 224 289 218L296 211L230 91Z" />
+      <path className="plane-shape plane-left-tail" d="M108 177L42 194L58 208L132 188Z" />
+      <path className="plane-shape plane-right-tail" d="M119 181L135 231L150 223L146 167Z" />
 
-        <path
-          className="plane-near-wing"
-          d="M187 119L273 204C280 211 290 209 295 202C298 198 296 192 294 187L248 100Z"
-          fill={`url(#${wingGradientId})`}
-        />
-        <path className="plane-wing-wrap" d="M224 132L274 185L292 180L251 105Z" />
-        <path className="plane-wing-tip" d="M273 204C280 211 290 209 295 202L292 188L280 193Z" />
-        <path className="plane-panel-line" d="M202 120L280 196M226 116L291 183M244 123L232 144M256 146L247 161M270 169L261 179" />
+      <path className="plane-shape plane-engine" d="M91 67L105 53L119 65L117 78Z" />
+      <path className="plane-shape plane-engine" d="M139 87L153 72L168 86L163 101Z" />
+      <path className="plane-shape plane-engine" d="M251 151L270 151L277 168L263 175Z" />
+      <path className="plane-shape plane-engine" d="M268 181L287 181L295 198L280 205Z" />
 
-        <g className="plane-engine-pod">
-          <path d="M248 118C259 113 273 119 276 129L277 142C276 151 267 154 258 148L251 137Z" fill={`url(#${metalGradientId})`} />
-          <ellipse cx="272" cy="132" rx="5" ry="9" />
-          <path className="plane-engine-detail" d="M255 121L261 146" />
+      <path
+        className="plane-shape plane-fuselage"
+        d="M82 211Q77 205 83 198L159 128L284 28Q304 12 319 18Q333 25 321 43L216 156L111 219Q93 229 82 211Z"
+      />
+      <path className="plane-outline-detail" d="M91 205L166 136M294 31Q306 25 316 28M112 197L128 181M164 143L180 127" />
+      <path className="plane-cockpit" d="M292 31Q307 20 318 25L308 39Z" />
+      <path className="plane-window-row" d="M231 82L281 41" />
+
+      {wingLogos.map((logo, index) => (
+        <g key={logo.x} transform={`rotate(${logo.rotation} ${logo.x} ${logo.y})`}>
+          <rect className="plane-logo-panel" x={logo.x - 19} y={logo.y - 19} width="38" height="38" rx="9" />
+          {faviconUrl ? (
+            <image href={faviconUrl} x={logo.x - 14} y={logo.y - 14} width="28" height="28" preserveAspectRatio="xMidYMid meet" />
+          ) : (
+            <text className="plane-logo-placeholder" x={logo.x} y={logo.y + 9} textAnchor="middle">+</text>
+          )}
+          <text className="plane-wing-label" x={logo.x} y={logo.y + 29} textAnchor="middle">{index === 0 ? "LEFT WING" : "RIGHT WING"}</text>
         </g>
-        <g className="plane-engine-pod">
-          <path d="M273 145C285 140 298 147 300 157L299 170C297 178 287 181 279 174L274 164Z" fill={`url(#${metalGradientId})`} />
-          <ellipse cx="296" cy="160" rx="5" ry="9" />
-          <path className="plane-engine-detail" d="M280 148L284 173" />
-        </g>
+      ))}
 
-        <path
-          className="plane-rear-stabilizer"
-          d="M83 151L18 171L59 190L128 161Z"
-          fill={`url(#${wingGradientId})`}
-        />
-        <path className="plane-tail-accent" d="M18 171L59 190L76 183L38 169Z" />
-        <path className="plane-panel-line" d="M35 173L76 183M57 164L96 174" />
-
-        <path
-          className="plane-vertical-tail"
-          d="M91 156L65 83C62 73 70 67 79 72L153 126L131 157Z"
-          fill={`url(#${wingGradientId})`}
-        />
-        <path className="plane-tail-wrap" d="M66 85C63 75 70 68 79 72L101 89L89 130Z" />
-        <path className="plane-panel-line" d="M84 86L119 126M91 103L80 139M101 120L89 148" />
-
-        <path className="plane-fuselage" d={fuselagePath} fill={`url(#${bodyGradientId})`} />
-        <g clipPath={`url(#${fuselageClipId})`}>
-          <path className="plane-brand-wrap" d="M112 150C158 132 210 102 304 43L316 57C224 116 170 146 124 163Z" />
-          <path className="plane-wrap-highlight" d="M119 149C166 130 219 98 307 44" />
-          <path className="plane-belly-shade" d="M49 172C94 173 137 154 181 128C147 163 106 184 64 188C54 188 48 181 49 172Z" />
-        </g>
-        <path className="plane-fuselage-highlight" d="M73 158C119 147 157 123 195 99L306 29" />
-        <path className="plane-window-line" d="M137 135C183 113 235 82 308 36" />
-        <path className="plane-window-rail" d="M132 141C181 119 238 84 315 35" />
-
-        <path className="plane-cockpit-window" d="M312 30L326 24L331 26L321 34Z" />
-        <path className="plane-cockpit-window" d="M326 23L337 22L339 25L331 28Z" />
-        <path className="plane-nose-detail" d="M333 31C340 29 344 29 348 30" />
-
-        <g className="plane-door" transform="rotate(-29 132 143)">
-          <rect x="126" y="134" width="11" height="18" rx="3" />
-          <circle cx="134" cy="143" r="1.2" />
-        </g>
-        <g className="plane-door" transform="rotate(-31 288 55)">
-          <rect x="283" y="48" width="10" height="16" rx="3" />
-          <circle cx="290" cy="56" r="1.1" />
-        </g>
-        <path className="plane-service-line" d="M74 171C110 165 139 151 169 133M195 112L293 49" />
-        <circle className="plane-navigation-light" cx="295" cy="201" r="3" />
+      <g className="plane-copy" transform="rotate(-38 207 112)">
+        <rect x="128" y="88" width="158" height="51" rx="10" />
+        <text className="plane-brand-name" x="207" y="105" textAnchor="middle">{shortName}</text>
+        <text className="plane-brand-handle" x="207" y="117" textAnchor="middle">{shortHandle}</text>
+        <text className="plane-brand-tagline" x="207" y="130" textAnchor="middle">{shortTagline}</text>
       </g>
 
-      <g transform={`rotate(${sponsorLabel.rotation} ${sponsorLabel.x} ${sponsorLabel.y})`}>
-        <text className="plane-brand-name" x={sponsorLabel.x} y={sponsorLabel.y} textAnchor="middle">{shortName}</text>
-        <text className="plane-brand-subline" x={sponsorLabel.x} y={sponsorLabel.y + 10} textAnchor="middle">SPONSOR PASS · BUILD001</text>
-      </g>
-
-      <g transform={`rotate(${wingLogo.rotation} ${wingLogo.x} ${wingLogo.y})`}>
-        <rect className="plane-logo-panel" x={wingLogo.x - 16} y={wingLogo.y - 16} width="32" height="32" rx="7" />
-        {faviconUrl ? (
-          <image href={faviconUrl} x={wingLogo.x - 11} y={wingLogo.y - 11} width="22" height="22" preserveAspectRatio="xMidYMid meet" />
-        ) : (
-          <text className="plane-logo-placeholder" x={wingLogo.x} y={wingLogo.y + 8} textAnchor="middle">+</text>
-        )}
-      </g>
-
-      <g transform={`rotate(${slotBadge.rotation} ${slotBadge.x} ${slotBadge.y})`}>
-        <circle className="plane-slot-badge" cx={slotBadge.x} cy={slotBadge.y} r="14" />
-        <text className="plane-position-number" x={slotBadge.x} y={slotBadge.y + 4} textAnchor="middle">#{number}</text>
+      <g className="plane-slot" transform="rotate(-38 112 188)">
+        <circle className="plane-slot-badge" cx="112" cy="188" r="15" />
+        <text className="plane-position-number" x="112" y="192" textAnchor="middle">#{number}</text>
       </g>
     </svg>
   );
+}
+
+function getContrastColor(hex: string) {
+  const normalized = /^#[0-9a-f]{6}$/i.test(hex) ? hex : "#c8ff25";
+  const red = Number.parseInt(normalized.slice(1, 3), 16);
+  const green = Number.parseInt(normalized.slice(3, 5), 16);
+  const blue = Number.parseInt(normalized.slice(5, 7), 16);
+  return (red * 299 + green * 587 + blue * 114) / 1000 > 145 ? "#11110f" : "#fffdf4";
 }
 
 function SponsorPass({
@@ -567,6 +513,8 @@ function SponsorPass({
           const preview = previews[placement.slug];
           const sponsorName = preview?.name ?? placement.sponsor?.projectName;
           const faviconUrl = preview?.faviconUrl ?? placement.sponsor?.faviconUrl;
+          const tagline = preview?.tagline ?? placement.sponsor?.tagline;
+          const brandColor = preview?.brandColor ?? placement.sponsor?.brandColor ?? "#c8ff25";
           return (
             <button
               type="button"
@@ -575,6 +523,7 @@ function SponsorPass({
               key={placement.slug}
               onClick={() => onSelect(placement.slug)}
               aria-label={`Open ${placement.name}, $${placement.price}, ${placement.status}`}
+              style={{ "--slot-brand": brandColor } as CSSProperties}
             >
               <span className="pass-slot-meta">{placement.number} · {placement.tier}</span>
               <div className="pass-brand">
@@ -584,9 +533,18 @@ function SponsorPass({
                 >
                   {faviconUrl ? null : sponsorName?.slice(0, 1) ?? "+"}
                 </span>
-                <strong>{sponsorName ?? "YOUR BRAND"}</strong>
+                <span className="pass-brand-copy">
+                  <strong>{sponsorName ?? "YOUR BRAND"}</strong>
+                  <small>{tagline ?? placement.short}</small>
+                </span>
               </div>
-              <span className="pass-slot-foot">{placement.status === "available" ? `Available · $${placement.price}` : placement.status}</span>
+              <span className="pass-slot-foot">
+                {placement.status === "available"
+                  ? `Available · $${placement.price}`
+                  : placement.status === "sold"
+                    ? `Outbid · $${placement.checkoutPrice}`
+                    : "Checkout active"}
+              </span>
             </button>
           );
         })}
@@ -626,6 +584,8 @@ function SponsorDrawer({
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
   const [isPending, startTransition] = useTransition();
+  const isOutbid = placement.status === "sold" && Boolean(placement.sponsor);
+  const canCheckout = placement.status === "available" || (isOutbid && !placement.hasPendingBid);
 
   useEffect(() => {
     document.body.classList.add("drawer-open");
@@ -708,13 +668,29 @@ function SponsorDrawer({
         <dl className="drawer-specs">
           <div><dt>Pass format</dt><dd>{placement.format}</dd></div>
           <div><dt>Visibility</dt><dd>{placement.exposure}</dd></div>
-          <div><dt>Campaign fee</dt><dd>${placement.price} USD</dd></div>
+          <div><dt>{isOutbid ? "Next minimum bid" : "Starting price"}</dt><dd>${placement.checkoutPrice} USD</dd></div>
         </dl>
 
-        {placement.status === "available" ? (
+        {isOutbid && placement.sponsor ? (
+          <div className="current-holder-card" style={{ "--holder-color": placement.sponsor.brandColor } as CSSProperties}>
+            <div
+              className="current-holder-logo"
+              style={placement.sponsor.faviconUrl ? { backgroundImage: `url(${placement.sponsor.faviconUrl})` } : undefined}
+            >
+              {placement.sponsor.faviconUrl ? null : placement.sponsor.projectName.slice(0, 1)}
+            </div>
+            <div>
+              <span>Current sponsor · ${placement.currentBid}</span>
+              <strong>{placement.sponsor.projectName}</strong>
+              <p>{placement.sponsor.tagline}</p>
+            </div>
+          </div>
+        ) : null}
+
+        {canCheckout ? (
           <form onSubmit={handleSubmit} className="sponsor-form">
             <label>
-              <span>Startup URL</span>
+              <span>{isOutbid ? "Challenger startup URL" : "Startup URL"}</span>
               <input
                 type="text"
                 inputMode="url"
@@ -733,7 +709,7 @@ function SponsorDrawer({
                 }}
                 required
               />
-              <small>We fetch your startup name, favicon, and tagline automatically.</small>
+              <small>We fetch your startup name, logo, brand color, and tagline automatically.</small>
             </label>
             <label>
               <span>X handle <i>optional</i></span>
@@ -744,7 +720,15 @@ function SponsorDrawer({
               {isPreviewing ? <><LoaderCircle className="spin" /><span>Reading your website…</span></> : null}
               {!isPreviewing && preview ? (
                 <>
-                  <div className="brand-favicon" style={preview.faviconUrl ? { backgroundImage: `url(${preview.faviconUrl})` } : undefined}>{preview.faviconUrl ? null : preview.name.slice(0, 1)}</div>
+                  <div
+                    className="brand-favicon"
+                    style={{
+                      backgroundColor: preview.brandColor,
+                      ...(preview.faviconUrl ? { backgroundImage: `url(${preview.faviconUrl})` } : {}),
+                    }}
+                  >
+                    {preview.faviconUrl ? null : preview.name.slice(0, 1)}
+                  </div>
                   <div><strong>{preview.name}</strong><p>{preview.tagline}</p></div>
                 </>
               ) : null}
@@ -754,15 +738,20 @@ function SponsorDrawer({
 
             {checkoutError ? <p className="checkout-error">{checkoutError}</p> : null}
             <button className="checkout-button" type="submit" disabled={isPending || isPreviewing || !preview}>
-              <span>{isPending ? "Opening secure checkout…" : `Continue to Stripe · $${placement.price}`}</span>
+              <span>{isPending ? "Opening secure checkout…" : `${isOutbid ? "Outbid with Stripe" : "Continue to Stripe"} · $${placement.checkoutPrice}`}</span>
               {isPending ? <LoaderCircle className="spin" /> : <ArrowRight />}
             </button>
-            <p className="stripe-note"><LockKeyhole size={13} /> Stripe asks for your receipt email next. No BrandMyFlight account is created.</p>
+            <p className="stripe-note">
+              <LockKeyhole size={13} />
+              {isOutbid
+                ? "Your payment replaces this sponsor; their real Stripe payment is automatically refunded. Demo entries have no charge to refund."
+                : "Stripe asks for your receipt email next. No BrandMyFlight account is created."}
+            </p>
           </form>
         ) : (
           <div className="unavailable-panel">
-            <strong>This position is {placement.status}.</strong>
-            <p>{placement.sponsor ? `${placement.sponsor.projectName} currently holds this Sponsor Pass position.` : "Choose another position from the live inventory."}</p>
+            <strong>{placement.hasPendingBid ? "An outbid checkout is in progress." : `This position is ${placement.status}.`}</strong>
+            <p>{placement.hasPendingBid ? "Try again in a few minutes if the challenger does not finish payment." : "Choose another position from the live inventory."}</p>
             <button type="button" onClick={onClose}>Back to positions</button>
           </div>
         )}

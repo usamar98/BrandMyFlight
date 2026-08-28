@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { fetchProjectMetadata } from "@/lib/project-metadata";
 import { getPlacement } from "@/lib/placements";
-import { reservePlacement } from "@/lib/supabase-server";
+import { getCheckoutQuote, reservePlacement } from "@/lib/supabase-server";
 import { getStripe } from "@/lib/stripe";
 
 const checkoutSchema = z.object({
@@ -39,7 +39,10 @@ export async function createCheckout(input: unknown): Promise<CheckoutResult> {
   }
 
   try {
-    const project = await fetchProjectMetadata(parsed.data.startupUrl);
+    const [project, quote] = await Promise.all([
+      fetchProjectMetadata(parsed.data.startupUrl),
+      getCheckoutQuote(placement.slug),
+    ]);
     const xHandle = parsed.data.xHandle
       ? `@${parsed.data.xHandle.replace(/^@/, "")}`
       : null;
@@ -51,7 +54,10 @@ export async function createCheckout(input: unknown): Promise<CheckoutResult> {
       project_name: project.name.slice(0, 500),
       project_tagline: project.tagline.slice(0, 500),
       favicon_url: (project.faviconUrl ?? "").slice(0, 500),
+      brand_color: project.brandColor,
       x_handle: (xHandle ?? "").slice(0, 500),
+      bid_mode: quote.isOutbid ? "outbid" : "opening",
+      supersedes_sponsorship_id: quote.supersedesSponsorshipId ?? "",
     };
 
     const session = await stripe.checkout.sessions.create({
@@ -61,10 +67,12 @@ export async function createCheckout(input: unknown): Promise<CheckoutResult> {
           quantity: 1,
           price_data: {
             currency: "usd",
-            unit_amount: placement.price * 100,
+            unit_amount: quote.amountCents,
             product_data: {
-              name: `BrandMyFlight · ${placement.name}`,
-              description: placement.description.slice(0, 500),
+              name: `BrandMyFlight · ${quote.isOutbid ? "Outbid" : "Claim"} ${placement.name}`,
+              description: quote.isOutbid
+                ? `Replace the current sponsor in ${placement.name}. The previous paid sponsor is automatically refunded.`
+                : placement.description.slice(0, 500),
               metadata: { placement_slug: placement.slug },
             },
           },
@@ -92,9 +100,11 @@ export async function createCheckout(input: unknown): Promise<CheckoutResult> {
         projectUrl: project.url,
         tagline: project.tagline,
         faviconUrl: project.faviconUrl,
+        brandColor: project.brandColor,
         xHandle,
-        amountCents: placement.price * 100,
+        amountCents: quote.amountCents,
         expiresAt: new Date(expiresAt * 1000),
+        supersedesSponsorshipId: quote.supersedesSponsorshipId,
       });
     } catch (error) {
       await stripe.checkout.sessions.expire(session.id).catch(() => undefined);

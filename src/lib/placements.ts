@@ -129,13 +129,22 @@ export type SponsorPreview = {
   projectUrl: string;
   tagline: string;
   faviconUrl: string | null;
+  brandColor: string;
   xHandle: string | null;
 };
 
 export type PlacementWithState = Placement & {
   status: "available" | "reserved" | "sold";
   sponsor: SponsorPreview | null;
+  currentBid: number | null;
+  checkoutPrice: number;
+  hasPendingBid: boolean;
 };
+
+export function getNextBidAmountCents(currentAmountCents: number) {
+  const twentyPercentHigher = Math.ceil(currentAmountCents * 1.2);
+  return Math.ceil(twentyPercentHigher / 500) * 500;
+}
 
 export function getPlacement(slug: string) {
   return placements.find((placement) => placement.slug === slug);

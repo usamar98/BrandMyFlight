@@ -7,9 +7,12 @@ export type ProjectMetadata = {
   name: string;
   tagline: string;
   faviconUrl: string | null;
+  brandColor: string;
 };
 
 const MAX_HTML_BYTES = 512_000;
+const MAX_ICON_BYTES = 128_000;
+const DEFAULT_BRAND_COLOR = "#c8ff25";
 
 function decodeHtml(value: string) {
   return value
@@ -81,6 +84,46 @@ function findMeta(html: string, keys: string[]) {
   return "";
 }
 
+function normalizeHexColor(value: string) {
+  const match = value.trim().toLowerCase().match(/^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i);
+  if (!match) return null;
+
+  const raw = match[1];
+  if (raw.length === 3) {
+    return `#${raw.split("").map((character) => character.repeat(2)).join("")}`;
+  }
+
+  if (raw.length === 8 && raw.slice(6) === "00") return null;
+  return `#${raw.slice(0, 6)}`;
+}
+
+function colorScore(color: string) {
+  const red = Number.parseInt(color.slice(1, 3), 16) / 255;
+  const green = Number.parseInt(color.slice(3, 5), 16) / 255;
+  const blue = Number.parseInt(color.slice(5, 7), 16) / 255;
+  const maximum = Math.max(red, green, blue);
+  const minimum = Math.min(red, green, blue);
+  const saturation = maximum === 0 ? 0 : (maximum - minimum) / maximum;
+  const brightness = (red + green + blue) / 3;
+  const readableBrightness = 1 - Math.abs(brightness - 0.52);
+  return saturation * 0.72 + readableBrightness * 0.28;
+}
+
+function findSvgBrandColor(svg: string) {
+  const colors = svg.match(/#[0-9a-f]{3,8}\b/gi) ?? [];
+  const candidates = [...new Set(colors.map(normalizeHexColor).filter((color): color is string => Boolean(color)))]
+    .filter((color) => {
+      const red = Number.parseInt(color.slice(1, 3), 16);
+      const green = Number.parseInt(color.slice(3, 5), 16);
+      const blue = Number.parseInt(color.slice(5, 7), 16);
+      const average = (red + green + blue) / 3;
+      return average > 18 && average < 246;
+    })
+    .sort((left, right) => colorScore(right) - colorScore(left));
+
+  return candidates[0] ?? null;
+}
+
 function findFavicon(html: string, baseUrl: URL) {
   const links = html.match(/<link\b[^>]*>/gi) ?? [];
   for (const link of links) {
@@ -99,7 +142,22 @@ function findFavicon(html: string, baseUrl: URL) {
   return new URL("/favicon.ico", baseUrl).toString();
 }
 
-async function readLimitedHtml(response: Response) {
+function findProjectName(html: string, titleTag: string, hostname: string) {
+  const explicitName = findMeta(html, ["application-name", "og:site_name"]);
+  if (explicitName) return explicitName;
+
+  const marketingTitle = findMeta(html, ["og:title", "twitter:title"]) || decodeHtml(titleTag);
+  const titleParts = marketingTitle
+    .split(/\s+[|—–]\s+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const brandSuffix = titleParts.at(-1);
+
+  if (brandSuffix && titleParts.length > 1 && brandSuffix.length <= 45) return brandSuffix;
+  return marketingTitle || hostname.replace(/^www\./, "");
+}
+
+async function readLimitedText(response: Response, maxBytes: number) {
   if (!response.body) return "";
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
@@ -110,7 +168,7 @@ async function readLimitedHtml(response: Response) {
     const { done, value } = await reader.read();
     if (done) break;
     bytes += value.byteLength;
-    if (bytes > MAX_HTML_BYTES) {
+    if (bytes > maxBytes) {
       await reader.cancel();
       break;
     }
@@ -118,6 +176,37 @@ async function readLimitedHtml(response: Response) {
   }
   html += decoder.decode();
   return html;
+}
+
+async function fetchFaviconBrandColor(input: string) {
+  let url = new URL(input);
+
+  for (let redirect = 0; redirect < 3; redirect += 1) {
+    await assertPublicUrl(url);
+    const response = await fetch(url, {
+      redirect: "manual",
+      signal: AbortSignal.timeout(5_000),
+      headers: {
+        Accept: "image/svg+xml,image/*",
+        "User-Agent": "BrandMyFlight-Metadata/1.0",
+      },
+      cache: "no-store",
+    });
+
+    if ([301, 302, 303, 307, 308].includes(response.status)) {
+      const location = response.headers.get("location");
+      if (!location) return null;
+      url = new URL(location, url);
+      continue;
+    }
+
+    if (!response.ok) return null;
+    const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
+    if (!contentType.includes("svg") && !url.pathname.toLowerCase().endsWith(".svg")) return null;
+    return findSvgBrandColor(await readLimitedText(response, MAX_ICON_BYTES));
+  }
+
+  return null;
 }
 
 export async function fetchProjectMetadata(input: string): Promise<ProjectMetadata> {
@@ -148,9 +237,9 @@ export async function fetchProjectMetadata(input: string): Promise<ProjectMetada
       throw new Error("That URL is not a website page.");
     }
 
-    const html = await readLimitedHtml(response);
+    const html = await readLimitedText(response, MAX_HTML_BYTES);
     const titleTag = /<title\b[^>]*>([\s\S]*?)<\/title>/i.exec(html)?.[1] ?? "";
-    const name = findMeta(html, ["og:site_name", "og:title", "twitter:title"]) || decodeHtml(titleTag) || url.hostname.replace(/^www\./, "");
+    const name = findProjectName(html, titleTag, url.hostname);
     const tagline = findMeta(html, ["og:description", "twitter:description", "description"]);
 
     const discoveredFavicon = findFavicon(html, url);
@@ -163,11 +252,17 @@ export async function fetchProjectMetadata(input: string): Promise<ProjectMetada
       faviconUrl = null;
     }
 
+    const themeColor = normalizeHexColor(findMeta(html, ["theme-color"]));
+    const faviconColor = faviconUrl
+      ? await fetchFaviconBrandColor(faviconUrl).catch(() => null)
+      : null;
+
     return {
       url: url.toString(),
       name: name.slice(0, 90),
       tagline: (tagline || `Discover ${name}.`).slice(0, 180),
       faviconUrl,
+      brandColor: faviconColor ?? themeColor ?? DEFAULT_BRAND_COLOR,
     };
   }
 

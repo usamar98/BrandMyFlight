@@ -1,6 +1,11 @@
 import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { placements, type PlacementWithState } from "@/lib/placements";
+import {
+  getNextBidAmountCents,
+  getPlacement,
+  placements,
+  type PlacementWithState,
+} from "@/lib/placements";
 
 let serviceClient: SupabaseClient | null = null;
 
@@ -51,7 +56,14 @@ export async function recordSiteVisit(sessionId: string): Promise<VisitorCounts 
 export async function getPlacementInventory(): Promise<PlacementWithState[]> {
   const supabase = getSupabaseService();
   if (!supabase) {
-    return placements.map((placement) => ({ ...placement, status: "available", sponsor: null }));
+    return placements.map((placement) => ({
+      ...placement,
+      status: "available",
+      sponsor: null,
+      currentBid: null,
+      checkoutPrice: placement.price,
+      hasPendingBid: false,
+    }));
   }
 
   const [{ data: inventory, error: inventoryError }, { data: sponsorships, error: sponsorshipError }] =
@@ -59,17 +71,32 @@ export async function getPlacementInventory(): Promise<PlacementWithState[]> {
       supabase.from("flight_placements").select("slug,status,reservation_expires_at"),
       supabase
         .from("flight_sponsorships")
-        .select("placement_slug,project_name,project_url,tagline,favicon_url,x_handle,status")
-        .eq("status", "paid"),
+        .select("id,placement_slug,project_name,project_url,tagline,favicon_url,brand_color,x_handle,amount_cents,status,expires_at,supersedes_sponsorship_id")
+        .in("status", ["paid", "pending"]),
     ]);
 
   if (inventoryError || sponsorshipError) {
     console.error("Unable to load placement inventory", inventoryError ?? sponsorshipError);
-    return placements.map((placement) => ({ ...placement, status: "available", sponsor: null }));
+    return placements.map((placement) => ({
+      ...placement,
+      status: "available",
+      sponsor: null,
+      currentBid: null,
+      checkoutPrice: placement.price,
+      hasPendingBid: false,
+    }));
   }
 
   const inventoryBySlug = new Map((inventory ?? []).map((row) => [row.slug, row]));
-  const sponsorBySlug = new Map((sponsorships ?? []).map((row) => [row.placement_slug, row]));
+  const sponsorBySlug = new Map(
+    (sponsorships ?? []).filter((row) => row.status === "paid").map((row) => [row.placement_slug, row]),
+  );
+  const now = Date.now();
+  const pendingBySlug = new Set(
+    (sponsorships ?? [])
+      .filter((row) => row.status === "pending" && new Date(row.expires_at).getTime() > now)
+      .map((row) => row.placement_slug),
+  );
 
   return placements.map((placement) => {
     const row = inventoryBySlug.get(placement.slug);
@@ -81,18 +108,74 @@ export async function getPlacementInventory(): Promise<PlacementWithState[]> {
 
     return {
       ...placement,
-      status: reservationExpired ? "available" : (row?.status ?? "available"),
+      status: sponsor ? "sold" : (reservationExpired ? "available" : (row?.status ?? "available")),
       sponsor: sponsor
         ? {
             projectName: sponsor.project_name,
             projectUrl: sponsor.project_url,
             tagline: sponsor.tagline,
             faviconUrl: sponsor.favicon_url,
+            brandColor: sponsor.brand_color,
             xHandle: sponsor.x_handle,
           }
         : null,
+      currentBid: sponsor ? Number(sponsor.amount_cents) / 100 : null,
+      checkoutPrice: sponsor
+        ? getNextBidAmountCents(Number(sponsor.amount_cents)) / 100
+        : placement.price,
+      hasPendingBid: pendingBySlug.has(placement.slug),
     } as PlacementWithState;
   });
+}
+
+export type CheckoutQuote = {
+  amountCents: number;
+  supersedesSponsorshipId: string | null;
+  isOutbid: boolean;
+};
+
+export async function getCheckoutQuote(placementSlug: string): Promise<CheckoutQuote> {
+  const placement = getPlacement(placementSlug);
+  if (!placement) throw new Error("That placement does not exist.");
+
+  const supabase = getSupabaseService();
+  if (!supabase) throw new Error("Supabase is not configured.");
+
+  const now = new Date().toISOString();
+  await supabase
+    .from("flight_sponsorships")
+    .update({ status: "expired", updated_at: now })
+    .eq("placement_slug", placementSlug)
+    .eq("status", "pending")
+    .lt("expires_at", now);
+
+  const { data: sponsorships, error } = await supabase
+    .from("flight_sponsorships")
+    .select("id,amount_cents,status,expires_at")
+    .eq("placement_slug", placementSlug)
+    .in("status", ["paid", "pending"]);
+
+  if (error) throw error;
+
+  const pending = (sponsorships ?? []).find(
+    (sponsorship) => sponsorship.status === "pending" && new Date(sponsorship.expires_at).getTime() > Date.now(),
+  );
+  if (pending) throw new Error("Another sponsor is checking out this position. Try again in a few minutes.");
+
+  const currentSponsor = (sponsorships ?? []).find((sponsorship) => sponsorship.status === "paid");
+  if (currentSponsor) {
+    return {
+      amountCents: getNextBidAmountCents(Number(currentSponsor.amount_cents)),
+      supersedesSponsorshipId: currentSponsor.id,
+      isOutbid: true,
+    };
+  }
+
+  return {
+    amountCents: placement.price * 100,
+    supersedesSponsorshipId: null,
+    isOutbid: false,
+  };
 }
 
 type ReservationInput = {
@@ -102,9 +185,11 @@ type ReservationInput = {
   projectUrl: string;
   tagline: string;
   faviconUrl: string | null;
+  brandColor: string;
   xHandle: string | null;
   amountCents: number;
   expiresAt: Date;
+  supersedesSponsorshipId: string | null;
 };
 
 export async function reservePlacement(input: ReservationInput) {
@@ -127,20 +212,36 @@ export async function reservePlacement(input: ReservationInput) {
     .eq("status", "reserved")
     .lt("reservation_expires_at", now);
 
-  const { data: reserved, error: reserveError } = await supabase
-    .from("flight_placements")
-    .update({
-      status: "reserved",
-      reservation_expires_at: input.expiresAt.toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .eq("slug", input.placementSlug)
-    .eq("status", "available")
-    .select("slug")
-    .maybeSingle();
+  if (input.supersedesSponsorshipId) {
+    const { data: currentSponsor, error: currentSponsorError } = await supabase
+      .from("flight_sponsorships")
+      .select("id,amount_cents")
+      .eq("id", input.supersedesSponsorshipId)
+      .eq("placement_slug", input.placementSlug)
+      .eq("status", "paid")
+      .maybeSingle();
 
-  if (reserveError) throw reserveError;
-  if (!reserved) throw new Error("This placement was just reserved by someone else.");
+    if (currentSponsorError) throw currentSponsorError;
+    if (!currentSponsor) throw new Error("That sponsor was already replaced. Refresh and try again.");
+    if (getNextBidAmountCents(Number(currentSponsor.amount_cents)) !== input.amountCents) {
+      throw new Error("The minimum outbid price changed. Refresh and try again.");
+    }
+  } else {
+    const { data: reserved, error: reserveError } = await supabase
+      .from("flight_placements")
+      .update({
+        status: "reserved",
+        reservation_expires_at: input.expiresAt.toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("slug", input.placementSlug)
+      .eq("status", "available")
+      .select("slug")
+      .maybeSingle();
+
+    if (reserveError) throw reserveError;
+    if (!reserved) throw new Error("This placement was just reserved by someone else.");
+  }
 
   const { error: insertError } = await supabase.from("flight_sponsorships").insert({
     placement_slug: input.placementSlug,
@@ -149,47 +250,79 @@ export async function reservePlacement(input: ReservationInput) {
     project_url: input.projectUrl,
     tagline: input.tagline,
     favicon_url: input.faviconUrl,
+    brand_color: input.brandColor,
     x_handle: input.xHandle,
     amount_cents: input.amountCents,
     status: "pending",
     expires_at: input.expiresAt.toISOString(),
+    supersedes_sponsorship_id: input.supersedesSponsorshipId,
   });
 
   if (insertError) {
-    await supabase
-      .from("flight_placements")
-      .update({ status: "available", reservation_expires_at: null, updated_at: new Date().toISOString() })
-      .eq("slug", input.placementSlug)
-      .eq("status", "reserved");
+    if (!input.supersedesSponsorshipId) {
+      await supabase
+        .from("flight_placements")
+        .update({ status: "available", reservation_expires_at: null, updated_at: new Date().toISOString() })
+        .eq("slug", input.placementSlug)
+        .eq("status", "reserved");
+    }
     throw insertError;
   }
 }
 
-export async function markSponsorshipPaid(sessionId: string, paymentIntent: string | null) {
+export type OutbidRefundTarget = {
+  sponsorshipId: string;
+  paymentIntentId: string | null;
+  refundId: string | null;
+};
+
+export async function getOutbidRefundTarget(sessionId: string): Promise<OutbidRefundTarget | null> {
   const supabase = getSupabaseService();
   if (!supabase) throw new Error("Supabase is not configured.");
 
-  const { data: sponsorship, error } = await supabase
+  const { data: challenger, error: challengerError } = await supabase
     .from("flight_sponsorships")
-    .update({
-      status: "paid",
-      stripe_payment_intent_id: paymentIntent,
-      paid_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
+    .select("supersedes_sponsorship_id")
     .eq("stripe_checkout_session_id", sessionId)
-    .select("placement_slug")
     .maybeSingle();
 
+  if (challengerError) throw challengerError;
+  if (!challenger?.supersedes_sponsorship_id) return null;
+
+  const { data: currentSponsor, error: currentSponsorError } = await supabase
+    .from("flight_sponsorships")
+    .select("id,stripe_payment_intent_id,stripe_refund_id,status")
+    .eq("id", challenger.supersedes_sponsorship_id)
+    .maybeSingle();
+
+  if (currentSponsorError) throw currentSponsorError;
+  if (!currentSponsor) throw new Error("The sponsor being outbid could not be found.");
+  if (!["paid", "outbid", "refunded"].includes(currentSponsor.status)) {
+    throw new Error("The sponsor being outbid is no longer eligible for replacement.");
+  }
+
+  return {
+    sponsorshipId: currentSponsor.id,
+    paymentIntentId: currentSponsor.stripe_payment_intent_id,
+    refundId: currentSponsor.stripe_refund_id,
+  };
+}
+
+export async function markSponsorshipPaid(
+  sessionId: string,
+  paymentIntent: string | null,
+  refundId: string | null = null,
+) {
+  const supabase = getSupabaseService();
+  if (!supabase) throw new Error("Supabase is not configured.");
+
+  const { error } = await supabase.rpc("promote_flight_sponsorship", {
+    p_session_id: sessionId,
+    p_payment_intent_id: paymentIntent,
+    p_refund_id: refundId,
+  });
+
   if (error) throw error;
-  if (!sponsorship) return;
-
-  const { error: placementError } = await supabase
-    .from("flight_placements")
-    .update({ status: "sold", reservation_expires_at: null, updated_at: new Date().toISOString() })
-    .eq("slug", sponsorship.placement_slug);
-
-  if (placementError) throw placementError;
 }
 
 export async function releaseSponsorship(sessionId: string) {
@@ -201,11 +334,12 @@ export async function releaseSponsorship(sessionId: string) {
     .update({ status: "expired", updated_at: new Date().toISOString() })
     .eq("stripe_checkout_session_id", sessionId)
     .eq("status", "pending")
-    .select("placement_slug")
+    .select("placement_slug,supersedes_sponsorship_id")
     .maybeSingle();
 
   if (error) throw error;
   if (!sponsorship) return;
+  if (sponsorship.supersedes_sponsorship_id) return;
 
   const { error: placementError } = await supabase
     .from("flight_placements")

@@ -119,17 +119,17 @@ h1 em, h2 em {
   z-index: 0;
 }
 .hero-plane {
-  opacity: 0.86;
+  opacity: 0.92;
   position: absolute;
   transition: filter 0.35s ease, opacity 0.35s ease;
-  width: min(var(--plane-width), max(80px, calc((100vw - 960px) / 2 - 14px)));
+  width: min(var(--plane-width), max(110px, calc((100vw - 930px) / 2 + 24px)));
 }
 .hero-plane-left { left: 8px; }
 .hero-plane-right { right: 8px; }
-.hero-plane-presenting { --plane-width: clamp(150px, 14vw, 220px); }
-.hero-plane-premium { --plane-width: clamp(110px, 9.8vw, 165px); }
-.hero-plane-medium { --plane-width: clamp(90px, 8vw, 135px); }
-.hero-plane-small { --plane-width: clamp(68px, 6.3vw, 105px); }
+.hero-plane-presenting { --plane-width: clamp(220px, 18vw, 290px); }
+.hero-plane-premium { --plane-width: clamp(185px, 15vw, 245px); }
+.hero-plane-medium { --plane-width: clamp(155px, 12vw, 205px); }
+.hero-plane-small { --plane-width: clamp(130px, 10vw, 170px); }
 .hero-plane:nth-child(1) { top: 18%; }
 .hero-plane:nth-child(2) { top: 10%; }
 .hero-plane:nth-child(3) { top: 34%; }
@@ -145,57 +145,40 @@ h1 em, h2 em {
 .hero-plane-flight { transform-origin: center; }
 .sponsor-plane {
   display: block;
-  filter: drop-shadow(0 8px 7px rgba(17, 17, 15, 0.18));
+  filter: drop-shadow(0 10px 9px rgba(17, 17, 15, 0.24));
   height: auto;
   overflow: visible;
   width: 100%;
 }
-.plane-shadow { fill: rgba(17, 17, 15, 0.18); filter: blur(6px); }
-.plane-far-wing,
-.plane-near-wing,
-.plane-rear-stabilizer,
-.plane-vertical-tail,
-.plane-fuselage {
-  stroke: var(--ink);
+.plane-shadow { fill: rgba(17, 17, 15, 0.2); filter: blur(7px); }
+.plane-shape {
+  fill: var(--plane-color);
+  stroke: #11110f;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 2.6;
+  stroke-width: 4.5;
 }
-.plane-far-wing-accent,
-.plane-wing-tip,
-.plane-tail-accent { fill: var(--acid); stroke: var(--ink); stroke-linejoin: round; stroke-width: 1.6; }
-.plane-panel-line,
-.plane-service-line,
-.plane-engine-detail {
+.plane-fuselage { stroke-width: 5.2; }
+.plane-engine { stroke-width: 3.8; }
+.plane-outline-detail {
   fill: none;
-  opacity: 0.62;
-  stroke: var(--ink);
+  opacity: 0.78;
+  stroke: var(--plane-ink);
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 1.35;
+  stroke-width: 2.8;
 }
-.plane-far-engine { fill: var(--paper-deep); stroke: var(--ink); stroke-linejoin: round; stroke-width: 2; }
-.plane-wing-wrap { fill: var(--ink); opacity: 0.94; stroke: var(--ink); stroke-linejoin: round; stroke-width: 1.4; }
-.plane-engine-pod path { stroke: var(--ink); stroke-linejoin: round; stroke-width: 2; }
-.plane-engine-pod ellipse { fill: var(--ink); stroke: var(--acid); stroke-width: 1.8; }
-.plane-tail-wrap { fill: var(--ink); stroke: var(--ink); stroke-linejoin: round; stroke-width: 1.5; }
-.plane-brand-wrap { fill: var(--ink); }
-.plane-wrap-highlight { fill: none; opacity: 0.88; stroke: var(--acid); stroke-linecap: round; stroke-width: 3.4; }
-.plane-belly-shade { fill: rgba(17, 17, 15, 0.2); }
-.plane-fuselage-highlight { fill: none; opacity: 0.82; stroke: #fffef7; stroke-linecap: round; stroke-width: 3; }
-.plane-window-line { fill: none; stroke: var(--paper); stroke-dasharray: 1 7; stroke-linecap: round; stroke-width: 3.2; }
-.plane-window-rail { fill: none; opacity: 0.85; stroke: var(--acid); stroke-linecap: round; stroke-width: 1.2; }
-.plane-cockpit-window { fill: var(--ink); stroke: var(--ink); stroke-linejoin: round; stroke-width: 1; }
-.plane-nose-detail { fill: none; stroke: var(--ink); stroke-linecap: round; stroke-width: 1.2; }
-.plane-door rect { fill: rgba(255, 253, 244, 0.14); stroke: var(--paper); stroke-width: 1.4; }
-.plane-door circle { fill: var(--acid); }
-.plane-navigation-light { fill: #ff3b30; stroke: var(--paper); stroke-width: 1.4; }
-.plane-logo-panel { fill: var(--acid); stroke: var(--ink); stroke-width: 2.2; }
-.plane-logo-placeholder { fill: var(--ink); font-family: Arial, sans-serif; font-size: 25px; font-weight: 900; }
-.plane-brand-name { fill: var(--paper); font-family: Arial, sans-serif; font-size: 13px; font-weight: 900; letter-spacing: 0.025em; }
-.plane-brand-subline { fill: var(--acid); font-family: "Courier New", monospace; font-size: 5.5px; font-weight: 900; letter-spacing: 0.13em; }
-.plane-slot-badge { fill: var(--acid); stroke: var(--ink); stroke-width: 2; }
-.plane-position-number { fill: var(--ink); font-family: "Courier New", monospace; font-size: 9px; font-weight: 900; }
+.plane-cockpit { fill: var(--plane-ink); stroke: #11110f; stroke-linejoin: round; stroke-width: 2.4; }
+.plane-window-row { fill: none; opacity: 0.8; stroke: var(--plane-ink); stroke-dasharray: 1 7; stroke-linecap: round; stroke-width: 3; }
+.plane-logo-panel { fill: #fffdf4; stroke: #11110f; stroke-width: 3; }
+.plane-logo-placeholder { fill: #11110f; font-family: Arial, sans-serif; font-size: 29px; font-weight: 900; }
+.plane-wing-label { fill: #11110f; font-family: "Courier New", monospace; font-size: 5px; font-weight: 900; letter-spacing: 0.08em; paint-order: stroke; stroke: #fffdf4; stroke-width: 2px; }
+.plane-copy rect { fill: var(--plane-ink); opacity: 0.94; stroke: #11110f; stroke-width: 2.2; }
+.plane-brand-name { fill: var(--plane-color); font-family: Arial, sans-serif; font-size: 13px; font-weight: 900; letter-spacing: 0.025em; }
+.plane-brand-handle { fill: var(--plane-color); font-family: "Courier New", monospace; font-size: 6px; font-weight: 900; letter-spacing: 0.08em; }
+.plane-brand-tagline { fill: var(--plane-color); font-family: Arial, sans-serif; font-size: 5.4px; font-weight: 700; }
+.plane-slot-badge { fill: #fffdf4; stroke: #11110f; stroke-width: 2.5; }
+.plane-position-number { fill: #11110f; font-family: "Courier New", monospace; font-size: 9px; font-weight: 900; }
 
 .pass-stage {
   align-items: center;
@@ -303,28 +286,31 @@ h1 em, h2 em {
   transition: background 0.18s, color 0.18s, transform 0.18s;
 }
 .pass-slot:hover, .pass-slot:focus-visible { background: var(--acid); color: var(--ink); outline: 0; transform: translateY(-2px); }
-.pass-slot-presenting { background: var(--ink); color: var(--paper); grid-column: span 12; min-height: 76px; }
-.pass-slot-premium { grid-column: span 6; min-height: 64px; }
-.pass-slot-medium { grid-column: span 4; min-height: 56px; }
-.pass-slot-small { grid-column: span 3; min-height: 50px; }
-.pass-slot[data-status="sold"] { background: var(--acid); color: var(--ink); }
+.pass-slot-presenting { background: var(--ink); color: var(--paper); grid-column: span 12; min-height: 104px; }
+.pass-slot-premium { grid-column: span 6; min-height: 94px; }
+.pass-slot-medium { grid-column: span 4; min-height: 86px; }
+.pass-slot-small { grid-column: span 3; min-height: 78px; }
+.pass-slot[data-status="sold"] { background: var(--acid); box-shadow: inset 5px 0 0 var(--slot-brand); color: var(--ink); }
 .pass-slot[data-status="reserved"] { background: var(--paper-deep); }
 .pass-slot-meta, .pass-slot-foot { font-family: "Courier New", monospace; font-size: 6.5px; letter-spacing: 0.08em; text-transform: uppercase; }
 .pass-slot-foot { opacity: 0.68; text-align: right; }
-.pass-brand { align-items: center; display: flex; gap: 6px; margin: 4px 0; min-width: 0; }
-.pass-brand strong { font-size: clamp(9px, 1.15vw, 16px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pass-brand { align-items: center; display: flex; gap: 10px; margin: 5px 0; min-width: 0; }
+.pass-brand-copy { display: flex; flex: 1; flex-direction: column; gap: 4px; min-width: 0; }
+.pass-brand strong { font-size: clamp(10px, 1.12vw, 16px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pass-brand-copy small { font-size: clamp(6px, 0.52vw, 8px); line-height: 1.25; opacity: 0.7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pass-brand-mark {
   align-items: center;
   background-color: var(--acid);
   background-position: center;
   background-repeat: no-repeat;
-  background-size: 68%;
-  border: 1px solid currentColor;
+  background-size: 72%;
+  border: 2px solid currentColor;
+  box-shadow: inset 0 0 0 4px var(--slot-brand);
   color: var(--ink);
   display: flex;
-  flex: 0 0 28px;
-  font-size: 14px;
-  height: 28px;
+  flex: 0 0 56px;
+  font-size: 22px;
+  height: 56px;
   justify-content: center;
 }
 .pass-slot[data-status="sold"] .pass-brand-mark { background-color: var(--paper); }
@@ -484,6 +470,12 @@ main > footer div a:not(.wordmark) { align-items: center; display: flex; font-si
 .drawer-specs div:last-child { border-right: 0; }
 .drawer-specs dt { color: var(--muted); font-family: "Courier New", monospace; font-size: 7px; letter-spacing: 0.08em; margin-bottom: 7px; text-transform: uppercase; }
 .drawer-specs dd { font-size: 10px; margin: 0; }
+.current-holder-card { align-items: center; background: var(--paper-deep); border-left: 7px solid var(--holder-color); display: flex; gap: 16px; margin-top: 28px; padding: 18px; }
+.current-holder-logo { align-items: center; background-color: var(--paper); background-position: center; background-repeat: no-repeat; background-size: 72%; border: 1px solid var(--ink); box-shadow: inset 0 0 0 4px var(--holder-color); display: flex; flex: 0 0 66px; font-size: 25px; font-weight: 900; height: 66px; justify-content: center; }
+.current-holder-card > div:last-child { min-width: 0; }
+.current-holder-card span { color: var(--muted); display: block; font-family: "Courier New", monospace; font-size: 8px; letter-spacing: 0.08em; margin-bottom: 6px; text-transform: uppercase; }
+.current-holder-card strong { display: block; font-size: 17px; }
+.current-holder-card p { color: var(--muted); font-size: 10px; line-height: 1.4; margin: 5px 0 0; }
 .sponsor-form { display: flex; flex-direction: column; gap: 22px; padding: 29px 0; }
 .sponsor-form label { display: flex; flex-direction: column; gap: 9px; }
 .sponsor-form label > span { font-size: 11px; font-weight: 800; }
@@ -573,11 +565,13 @@ main > footer div a:not(.wordmark) { align-items: center; display: flex; font-si
   .pass-details dd { font-size: 6px; }
   .pass-sponsors { gap: 3px; padding: 7px; }
   .pass-slot { padding: 5px; }
-  .pass-slot-presenting { min-height: 68px; }
-  .pass-slot-premium { min-height: 60px; }
-  .pass-slot-medium { min-height: 54px; }
-  .pass-slot-small { min-height: 49px; }
-  .pass-brand-mark { flex-basis: 18px; height: 18px; }
+  .pass-slot-presenting { min-height: 82px; }
+  .pass-slot-premium { min-height: 76px; }
+  .pass-slot-medium { min-height: 70px; }
+  .pass-slot-small { min-height: 66px; }
+  .pass-brand { gap: 6px; }
+  .pass-brand-mark { box-shadow: inset 0 0 0 2px var(--slot-brand); flex-basis: 36px; height: 36px; }
+  .pass-brand-copy small { display: none; }
   .pass-slot-meta, .pass-slot-foot { font-size: 5px; }
   .pass-footer { font-size: 4px; padding: 8px; }
   .pass-footer strong { font-size: 4px; }

@@ -1,6 +1,10 @@
 import type Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
-import { markSponsorshipPaid, releaseSponsorship } from "@/lib/supabase-server";
+import {
+  getOutbidRefundTarget,
+  markSponsorshipPaid,
+  releaseSponsorship,
+} from "@/lib/supabase-server";
 
 export async function POST(request: Request) {
   const stripe = getStripe();
@@ -21,13 +25,42 @@ export async function POST(request: Request) {
   }
 
   try {
-    if (event.type === "checkout.session.completed") {
+    if (
+      event.type === "checkout.session.completed" ||
+      event.type === "checkout.session.async_payment_succeeded"
+    ) {
       const session = event.data.object;
+      if (session.payment_status === "unpaid") {
+        return Response.json({ received: true });
+      }
+
       const paymentIntent =
         typeof session.payment_intent === "string"
           ? session.payment_intent
           : session.payment_intent?.id ?? null;
-      await markSponsorshipPaid(session.id, paymentIntent);
+      const refundTarget = await getOutbidRefundTarget(session.id);
+      let refundId = refundTarget?.refundId ?? null;
+
+      if (refundTarget?.paymentIntentId && !refundId) {
+        const refund = await stripe.refunds.create(
+          {
+            payment_intent: refundTarget.paymentIntentId,
+            metadata: {
+              reason: "BrandMyFlight sponsor position outbid",
+              replacement_checkout_session: session.id,
+              replaced_sponsorship_id: refundTarget.sponsorshipId,
+            },
+          },
+          { idempotencyKey: `brandmyflight-outbid-${session.id}` },
+        );
+
+        if (refund.status === "failed" || refund.status === "canceled") {
+          throw new Error("Stripe could not refund the sponsor who was outbid.");
+        }
+        refundId = refund.id;
+      }
+
+      await markSponsorshipPaid(session.id, paymentIntent, refundId);
     }
 
     if (event.type === "checkout.session.expired") {
